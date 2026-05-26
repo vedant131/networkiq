@@ -45,14 +45,16 @@ def _normalize(text: str) -> str:
 
 def _extract_offline(query: str) -> dict:
     """Rule-based intent extraction."""
-    q = query.lower()
+    # Strip trailing punctuation so "black rock?" and "black rock" both work
+    clean_query = re.sub(r'[^\w\s&.]', ' ', query).strip()
+    q = clean_query.lower()
 
     categories = [cat for cat, kws in INTENT_CATEGORY_MAP.items() if any(kw in q for kw in kws)]
     seniorities = [sn for sn, kws in SENIORITY_MAP.items() if any(kw in q for kw in kws)]
     domains = [dm for dm, kws in DOMAIN_MAP.items() if any(kw in q for kw in kws)]
 
     # Extract company hint (after "at", "in", "from", "@")
-    company_match = re.search(r"\b(?:at|in|from|@)\s+([A-Za-z0-9&.\s]+?)(?:\s+who|\s+that|$)", query, re.IGNORECASE)
+    company_match = re.search(r"\b(?:at|in|from|@)\s+([A-Za-z0-9&.\s]+?)(?:\s+who|\s+that|\s*$)", clean_query, re.IGNORECASE)
     company_hint = company_match.group(1).strip() if company_match else None
 
     # Build keyword list for ranker
