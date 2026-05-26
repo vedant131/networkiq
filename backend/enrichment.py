@@ -130,25 +130,11 @@ def _find_via_skrapp(first_name: str, last_name: str, company: str, api_key: str
 
 def find_email_waterfall(first_name: str, last_name: str, company: str, settings) -> Optional[Dict]:
     """
-    Attempts to find an email by hitting multiple APIs in sequence.
-    Returns the first successful result to conserve credits.
+    Attempts to find an email. Currently simplified to use ONLY Hunter.io.
     """
-    
     # 1. Hunter.io
     res = _find_via_hunter(first_name, last_name, company, settings.hunter_api_key)
     if res: return res
     
-    # 2. Apollo.io
-    res = _find_via_apollo(first_name, last_name, company, settings.apollo_api_key)
-    if res: return res
-    
-    # 3. Snov.io
-    res = _find_via_snov(first_name, last_name, company, settings.snov_client_id, settings.snov_client_secret)
-    if res: return res
-    
-    # 4. Skrapp.io
-    res = _find_via_skrapp(first_name, last_name, company, settings.skrapp_api_key)
-    if res: return res
-    
-    print(f"[enrichment] Waterfall exhausted. No email found for {first_name} {last_name}.")
+    print(f"[enrichment] Hunter exhausted. No email found for {first_name} {last_name}.")
     return None
