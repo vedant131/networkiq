@@ -38,6 +38,11 @@ DOMAIN_MAP = {
 }
 
 
+def _normalize(text: str) -> str:
+    """Remove spaces and lowercase — so 'black rock' matches 'BlackRock'."""
+    return re.sub(r'\s+', '', text.lower())
+
+
 def _extract_offline(query: str) -> dict:
     """Rule-based intent extraction."""
     q = query.lower()
@@ -47,7 +52,7 @@ def _extract_offline(query: str) -> dict:
     domains = [dm for dm, kws in DOMAIN_MAP.items() if any(kw in q for kw in kws)]
 
     # Extract company hint (after "at", "in", "from", "@")
-    company_match = re.search(r"\b(?:at|in|from|@)\s+([A-Za-z0-9\s]+?)(?:\s+who|\s+that|$)", query, re.IGNORECASE)
+    company_match = re.search(r"\b(?:at|in|from|@)\s+([A-Za-z0-9&.\s]+?)(?:\s+who|\s+that|$)", query, re.IGNORECASE)
     company_hint = company_match.group(1).strip() if company_match else None
 
     # Build keyword list for ranker
@@ -61,6 +66,39 @@ def _extract_offline(query: str) -> dict:
         "keywords": keywords,
         "label": query,
     }
+
+
+def _extract_gemini(query: str) -> dict:
+    """Gemini-powered intent extraction — free, no key needed via google.generativeai."""
+    try:
+        import google.generativeai as genai
+        gemini_key = settings.__dict__.get('gemini_api_key', '') or __import__('os').getenv('GEMINI_API_KEY', '')
+        if not gemini_key:
+            return _extract_offline(query)
+        genai.configure(api_key=gemini_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""Extract search intent from this LinkedIn network query.
+Return ONLY valid JSON with keys: categories (array), seniorities (array), domains (array),
+company_hint (string or null), keywords (array of relevant words).
+
+Valid categories: ["Software Engineer","Data Scientist","Recruiter/HR",
+  "Founder/Entrepreneur","Student","Marketing/Sales","Other"]
+Valid seniorities: ["Intern","Junior","Mid-level","Senior","Lead","Executive"]
+Valid domains: ["AI/ML","Backend","Frontend","DevOps/Cloud","Finance","General"]
+
+For company_hint, extract the exact company name as written (e.g. 'black rock' stays 'black rock').
+
+Query: "{query}"
+Return only valid JSON, no markdown."""
+        res = model.generate_content(prompt)
+        text = res.text.strip().strip('```json').strip('```').strip()
+        parsed = json.loads(text)
+        parsed.setdefault("label", query)
+        parsed.setdefault("keywords", re.findall(r"\b\w{3,}\b", query.lower()))
+        return parsed
+    except Exception as e:
+        print(f"[query_engine] Gemini error: {e} — using offline parser")
+        return _extract_offline(query)
 
 
 def _extract_openai(query: str) -> dict:
@@ -96,7 +134,11 @@ def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = Non
     """
     Parse query, filter df, re-rank, return (list_of_records, interpretation_label).
     """
-    if settings.ai_mode == "openai" and settings.openai_api_key:
+    # Priority: Gemini (free) → OpenAI → offline rules
+    gemini_key = __import__('os').getenv('GEMINI_API_KEY', '')
+    if gemini_key:
+        intent = _extract_gemini(query)
+    elif settings.ai_mode == "openai" and settings.openai_api_key:
         intent = _extract_openai(query)
     else:
         intent = _extract_offline(query)
@@ -115,10 +157,14 @@ def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = Non
     if intent.get("domains"):
         filtered = filtered[filtered["domain"].isin(intent["domains"])]
 
-    # Apply company hint
+    # Apply company hint — normalize spaces so 'black rock' matches 'BlackRock'
     if intent.get("company_hint"):
-        hint = intent["company_hint"].lower()
-        filtered = filtered[filtered["company_clean"].str.lower().str.contains(hint, na=False)]
+        hint_norm = _normalize(intent["company_hint"])
+        hint_raw = intent["company_hint"].lower()
+        filtered = filtered[
+            filtered["company_clean"].str.lower().str.contains(hint_raw, regex=False, na=False) |
+            filtered["company_clean"].apply(lambda c: hint_norm in _normalize(str(c)))
+        ]
 
     # Apply extra UI filters
     if extra_filters:

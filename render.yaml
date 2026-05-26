@@ -8,7 +8,9 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        sync: false          # set manually in Render dashboard — your Supabase connection string
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false          # Get free from aistudio.google.com/apikey
       - key: PYTHON_VERSION
         value: "3.11.0"
       - key: AI_MODE
