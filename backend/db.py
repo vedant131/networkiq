@@ -32,8 +32,12 @@ else:
 # ── Connection helpers ─────────────────────────────────────────────────────────
 
 def _pg_conn():
-    conn = psycopg2.connect(DATABASE_URL, sslmode="require")
-    return conn
+    # Render internal URLs start with "postgresql://...@dpg-" — no SSL needed
+    # External URLs (Supabase etc.) need SSL
+    needs_ssl = "pooler.supabase.com" in DATABASE_URL or "supabase.co" in DATABASE_URL
+    if needs_ssl:
+        return psycopg2.connect(DATABASE_URL, sslmode="require")
+    return psycopg2.connect(DATABASE_URL)
 
 def _sq_conn():
     conn = sqlite3.connect(str(DB_PATH))
