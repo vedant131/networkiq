@@ -24,7 +24,7 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
     })
     
     data = _fetch_json(url)
-    if data and "data" in data and data["data"].get("email"):
+    if data and isinstance(data.get("data"), dict) and data["data"].get("email"):
         return {
             "email": data["data"]["email"],
             "score": data["data"].get("score", 0),
@@ -50,7 +50,7 @@ def _find_via_apollo(first_name: str, last_name: str, company: str, api_key: str
     }
     
     data = _fetch_json(url, headers, payload)
-    if data and "person" in data and data["person"].get("email"):
+    if data and isinstance(data.get("person"), dict) and data["person"].get("email"):
         return {
             "email": data["person"]["email"],
             "score": 95, # Apollo returns verified mostly
@@ -76,8 +76,6 @@ def _find_via_snov(first_name: str, last_name: str, company: str, client_id: str
         
     access_token = token_data["access_token"]
     
-    # Note: Snov ideally requires domain, but they have a company name fallback in some endpoints.
-    # We will approximate domain by cleaning company name and adding .com.
     domain = company.lower().replace(" ", "") + ".com"
     
     url = "https://api.snov.io/v1/get-emails-from-names"
@@ -93,14 +91,16 @@ def _find_via_snov(first_name: str, last_name: str, company: str, client_id: str
     }
     
     data = _fetch_json(url, headers, payload)
-    if data and data.get("data") and data["data"][0].get("emails"):
-        emails = data["data"][0]["emails"]
-        if emails:
-            return {
-                "email": emails[0]["email"],
-                "score": emails[0].get("probability", 80),
-                "source": "Snov.io"
-            }
+    if data and isinstance(data.get("data"), list) and len(data["data"]) > 0:
+        first_match = data["data"][0]
+        if isinstance(first_match, dict) and isinstance(first_match.get("emails"), list) and len(first_match["emails"]) > 0:
+            best_email = first_match["emails"][0]
+            if isinstance(best_email, dict) and best_email.get("email"):
+                return {
+                    "email": best_email["email"],
+                    "score": best_email.get("probability", 80),
+                    "source": "Snov.io"
+                }
     return None
 
 def _find_via_skrapp(first_name: str, last_name: str, company: str, api_key: str) -> Optional[Dict]:
@@ -119,7 +119,7 @@ def _find_via_skrapp(first_name: str, last_name: str, company: str, api_key: str
     }
     
     data = _fetch_json(url, headers)
-    if data and data.get("email"):
+    if data and isinstance(data, dict) and data.get("email"):
         return {
             "email": data["email"],
             "score": data.get("accuracy", 80),
