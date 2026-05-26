@@ -7,6 +7,8 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     plan: free
     envVars:
+      - key: DATABASE_URL
+        sync: false          # set manually in Render dashboard — your Supabase connection string
       - key: PYTHON_VERSION
         value: "3.11.0"
       - key: AI_MODE
@@ -20,7 +22,7 @@ services:
       - key: TWILIO_WHATSAPP_FROM
         value: "whatsapp:+14155238886"
       - key: WEBSITE_URL
-        value: "https://vedant131.github.io/linkedin-network-intelligence"
+        value: "https://vedant131.github.io/networkiq"
     disk:
       name: networkiq-data
       mountPath: /data
