@@ -54,6 +54,12 @@ def _df_to_connections(df: pd.DataFrame) -> list[dict]:
     records = []
     for idx, row in df.iterrows():
         tags = row.get("tags", [])
+        if isinstance(tags, str):
+            try:
+                import json as _json
+                tags = _json.loads(tags)
+            except Exception:
+                tags = []
         if not isinstance(tags, list):
             tags = []
         records.append({
@@ -82,7 +88,18 @@ def _compute_insights(df: pd.DataFrame) -> dict:
     by_dom  = df["domain"].value_counts().to_dict()
     top_cos = [[k, v] for k, v in df["company_clean"].value_counts().head(10).items()]
 
-    all_tags = [t for tags in df["tags"] for t in (tags if isinstance(tags, list) else [])]
+    all_tags = []
+    for tags in df["tags"]:
+        if isinstance(tags, list):
+            all_tags.extend(tags)
+        elif isinstance(tags, str) and tags.startswith('['):
+            try:
+                import json as _json
+                parsed = _json.loads(tags)
+                if isinstance(parsed, list):
+                    all_tags.extend(parsed)
+            except Exception:
+                pass
     tag_counts = Counter(all_tags)
 
     return {

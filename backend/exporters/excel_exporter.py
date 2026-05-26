@@ -74,16 +74,30 @@ def build_excel(df: pd.DataFrame) -> bytes:
     # Data rows
     for r_idx, row in enumerate(df.itertuples(index=False), 2):
         cat = getattr(row, "category", "Other")
-        fill_colour = CATEGORY_COLOURS.get(cat, "F1F5F9")
+        fill_colour = CATEGORY_COLOURS.get(str(cat), "F1F5F9")
         row_fill = PatternFill("solid", fgColor=fill_colour)
 
         for c_idx, (_, field) in enumerate(columns, 1):
-            val = getattr(row, field, "")
-            if isinstance(val, list):
-                val = ", ".join(val)
-            if field == "score":
-                val = round(float(val), 2) if val else 0.0
-            cell = ws.cell(row=r_idx, column=c_idx, value=val)
+            try:
+                val = getattr(row, field, "")
+                if isinstance(val, list):
+                    val = ", ".join(str(v) for v in val)
+                elif isinstance(val, str) and val.startswith("["):
+                    # tags came back as a JSON string from SQLite
+                    import json as _json
+                    try:
+                        parsed = _json.loads(val)
+                        val = ", ".join(str(v) for v in parsed) if isinstance(parsed, list) else val
+                    except Exception:
+                        pass
+                if field == "score":
+                    try:
+                        val = round(float(val), 2)
+                    except (TypeError, ValueError):
+                        val = 0.0
+                cell = ws.cell(row=r_idx, column=c_idx, value=str(val) if val is not None else "")
+            except Exception:
+                cell = ws.cell(row=r_idx, column=c_idx, value="")
             cell.fill = row_fill
             cell.font = BODY_FONT
             cell.border = THIN_BORDER
@@ -134,11 +148,20 @@ def build_excel(df: pd.DataFrame) -> bytes:
 
     # Summary row at top of Insights
     ws2.insert_rows(1)
+    def _is_list(v):
+        if isinstance(v, list): return v
+        if isinstance(v, str) and v.startswith("["):
+            import json as _json
+            try: return _json.loads(v)
+            except Exception: return []
+        return []
+
+    high_value_count = df['tags'].apply(lambda t: 'High Value Connection' in _is_list(t)).sum()
     summary_text = (
         f"Total: {len(df)}  |  "
         f"Recruiters: {(df['category']=='Recruiter/HR').sum()}  |  "
         f"Engineers: {(df['category']=='Software Engineer').sum()}  |  "
-        f"High Value: {df['tags'].apply(lambda t: 'High Value Connection' in t).sum()}"
+        f"High Value: {high_value_count}"
     )
     ws2["A1"] = summary_text
     ws2["A1"].font = Font(bold=True, size=10)

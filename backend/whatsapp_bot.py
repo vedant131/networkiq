@@ -46,6 +46,16 @@ def _compute_summary(df) -> dict:
     return {"by_category": by_cat, "top_companies": top_cos}
 
 
+def _safe_list(val) -> list:
+    """Safely coerce a value to a list (handles JSON string from SQLite)."""
+    if isinstance(val, list): return val
+    if isinstance(val, str) and val.startswith('['):
+        import json as _json
+        try: return _json.loads(val)
+        except Exception: return []
+    return []
+
+
 def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -> str:
     """
     Main entry point. Takes the sender's phone and message text.
