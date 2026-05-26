@@ -207,6 +207,10 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
     total = len(results)
     page = 0
 
+    if total == 0:
+        # Don't save state for empty results
+        return _twiml(format_results_page(results, 0, 0, label))
+
     # Save pagination state
     set_user_state(
         from_phone,

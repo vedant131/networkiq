@@ -172,7 +172,14 @@ def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = Non
             if values and field in filtered.columns:
                 filtered = filtered[filtered[field].isin(values)]
 
-    # If nothing matched, fall back to full set with keyword ranking
+    had_company_filter = bool(intent.get("company_hint"))
+
+    # If nothing matched AND we had a specific company filter, return empty
+    # so the bot can say "nobody found at X" instead of showing everyone
+    if len(filtered) == 0 and had_company_filter:
+        return [], f"No one in your network at {intent['company_hint'].title()}"
+
+    # If nothing matched for any other reason, fall back to full set with keyword ranking
     if len(filtered) == 0:
         filtered = df.copy()
 
@@ -186,5 +193,7 @@ def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = Non
             label += f" · {', '.join(intent['seniorities'])}"
         if intent.get("company_hint"):
             label += f" · at {intent['company_hint']}"
+    elif intent.get("company_hint") and not intent.get("categories"):
+        label = f"Who works at {intent['company_hint'].title()}"
 
     return ranked.to_dict("records"), label
