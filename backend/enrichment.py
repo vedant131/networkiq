@@ -135,12 +135,18 @@ def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
         "pretty": "false"
     })
 
-    headers = {"X-Api-Key": api_key}
+    headers = {
+        "X-Api-Key": api_key,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+    }
     data = _fetch_json(url, headers)
+    print(f"[enrichment] PDL raw response status: {data.get('status') if data else 'None'}")
 
     if not data or data.get("status") != 200:
-        print(f"[enrichment] PDL: no match or error — {data.get('status') if data else 'no response'}")
+        print(f"[enrichment] PDL: no match or error — {data.get('status') if data else 'no response'} | {str(data)[:200]}")
         return None
+
 
     p = data.get("data", {})
 
