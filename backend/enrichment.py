@@ -1,4 +1,5 @@
 import urllib.request
+import urllib.error
 import urllib.parse
 import json
 from typing import Optional, Dict
@@ -8,9 +9,19 @@ def _fetch_json(url: str, headers: dict = None, data: bytes = None) -> dict:
         req = urllib.request.Request(url, headers=headers or {}, data=data)
         with urllib.request.urlopen(req, timeout=10) as response:
             return json.loads(response.read().decode())
+    except urllib.error.HTTPError as e:
+        # Read the error body — Hunter.io sends JSON with error details even on 4xx
+        try:
+            body = e.read().decode()
+            print(f"[enrichment] HTTP {e.code} error from {url.split('?')[0]}: {body[:300]}")
+            return json.loads(body)   # Return the error JSON so callers can inspect it
+        except Exception:
+            print(f"[enrichment] HTTP {e.code} error (unreadable body) from {url.split('?')[0]}")
+            return {"_http_error": e.code}
     except Exception as e:
-        print(f"[enrichment] API request failed to {url}: {e}")
+        print(f"[enrichment] Request failed to {url.split('?')[0]}: {e}")
         return None
+
 
 
 # ── Known company → domain mapping (Hunter needs the domain, not company name) ─
