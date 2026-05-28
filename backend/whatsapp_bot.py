@@ -184,10 +184,45 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             email = result["email"]
             score = result["score"]
             source = result.get("source", "API")
-            # Save it
+
+            # Save email to DB
             from db import update_user_connection_email
             update_user_connection_email(from_phone, full_name, company, email)
-            return _twiml(f"✨ Found email for {full_name} at {company}!\n\n📧 {email}\n\n_Found via {source} (Confidence: {score}%)_")
+
+            # ── Build rich profile message with PDL data ──────────────
+            lines = [f"✨ *{full_name}* — Full Profile\n"]
+            lines.append(f"📧 *Email:* {email}")
+            lines.append(f"   _via {source} · Confidence {score}%_")
+
+            if result.get("pdl_job"):
+                lines.append(f"\n💼 *Current Role:* {result['pdl_job']}")
+
+            if result.get("pdl_location"):
+                lines.append(f"📍 *Location:* {result['pdl_location']}")
+
+            if result.get("pdl_industry"):
+                lines.append(f"🏭 *Industry:* {result['pdl_industry'].title()}")
+
+            # Social profiles
+            socials = []
+            if result.get("pdl_linkedin"):
+                lnk = result["pdl_linkedin"].replace("https://www.linkedin.com/in/", "").strip("/")
+                socials.append(f"🔗 LinkedIn: linkedin.com/in/{lnk}")
+            if result.get("pdl_twitter"):
+                socials.append(f"🐦 Twitter: @{result['pdl_twitter']}")
+            if result.get("pdl_github"):
+                socials.append(f"💻 GitHub: github.com/{result['pdl_github']}")
+
+            if socials:
+                lines.append(f"\n*Social:*")
+                lines.extend(socials)
+
+            if result.get("pdl_education"):
+                lines.append(f"\n🎓 *Education:*")
+                for edu in result["pdl_education"]:
+                    lines.append(f"   • {edu}")
+
+            return _twiml("\n".join(lines))
         else:
             return _twiml(f"❌ Sorry, our waterfall engines couldn't find a verified corporate email for {full_name} at {company}.")
 

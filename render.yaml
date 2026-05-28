@@ -10,7 +10,9 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: GEMINI_API_KEY
-        sync: false          # Get free from aistudio.google.com/apikey
+        sync: false
+      - key: PDL_API_KEY
+        sync: false          # Get free at peopledatalabs.com — 1000 enrichments/month free
       - key: PYTHON_VERSION
         value: "3.11.0"
       - key: AI_MODE

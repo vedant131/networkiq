@@ -32,6 +32,109 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
         }
     return None
 
+
+def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
+    """
+    Call People Data Labs Person Enrichment API with a found email.
+    Returns a dict with LinkedIn, Twitter, GitHub, location, education, job info.
+    Free tier: 1000 calls/month.
+    """
+    if not api_key or not email:
+        return None
+
+    print(f"[enrichment] PDL enrichment for {email}...")
+    url = "https://api.peopledatalabs.com/v2/person/enrich?" + urllib.parse.urlencode({
+        "email": email,
+        "pretty": "false"
+    })
+
+    headers = {"X-Api-Key": api_key}
+    data = _fetch_json(url, headers)
+
+    if not data or data.get("status") != 200:
+        print(f"[enrichment] PDL: no match or error — {data.get('status') if data else 'no response'}")
+        return None
+
+    p = data.get("data", {})
+
+    # ── Extract clean fields ──────────────────────────────────────────
+    # LinkedIn
+    linkedin_url = None
+    for profile in p.get("profiles", []):
+        if profile.get("network") == "linkedin":
+            linkedin_url = profile.get("url")
+            break
+
+    # Twitter
+    twitter_handle = None
+    for profile in p.get("profiles", []):
+        if profile.get("network") == "twitter":
+            twitter_handle = profile.get("username") or profile.get("url", "").split("/")[-1]
+            break
+
+    # GitHub
+    github_handle = None
+    for profile in p.get("profiles", []):
+        if profile.get("network") == "github":
+            github_handle = profile.get("username") or profile.get("url", "").split("/")[-1]
+            break
+
+    # Location
+    loc = p.get("location_name") or p.get("city") or ""
+
+    # Education
+    education = []
+    for edu in p.get("education", [])[:2]:
+        school = edu.get("school", {}).get("name", "")
+        degree = edu.get("degrees", [None])[0] or ""
+        if school:
+            education.append(f"{degree} @ {school}".strip(" @"))
+
+    # Current job
+    current_job = None
+    for exp in p.get("experience", []):
+        if exp.get("is_primary"):
+            title = exp.get("title", {}).get("name", "")
+            company = exp.get("company", {}).get("name", "")
+            current_job = f"{title} at {company}".strip(" at")
+            break
+
+    result = {
+        "pdl_linkedin":  linkedin_url,
+        "pdl_twitter":   twitter_handle,
+        "pdl_github":    github_handle,
+        "pdl_location":  loc,
+        "pdl_education": education,
+        "pdl_job":       current_job,
+        "pdl_full_name": p.get("full_name", ""),
+        "pdl_industry":  p.get("industry", ""),
+    }
+
+    print(f"[enrichment] PDL success: {result}")
+    return result
+
+
+def find_email_waterfall(first_name: str, last_name: str, company: str, settings) -> Optional[Dict]:
+    """
+    Finds email via Hunter.io, then auto-enriches with People Data Labs.
+    Returns combined result with email + social profile data.
+    """
+    # 1. Hunter.io — find the email
+    res = _find_via_hunter(first_name, last_name, company, settings.hunter_api_key)
+    if not res:
+        print(f"[enrichment] Hunter exhausted. No email found for {first_name} {last_name}.")
+        return None
+
+    # 2. PDL — enrich with social profiles (auto, no user interaction needed)
+    pdl_key = getattr(settings, "pdl_api_key", None) or __import__("os").getenv("PDL_API_KEY", "")
+    if pdl_key and res.get("email"):
+        pdl_data = enrich_via_pdl(res["email"], pdl_key)
+        if pdl_data:
+            res.update(pdl_data)
+
+    return res
+
+
 def _find_via_apollo(first_name: str, last_name: str, company: str, api_key: str) -> Optional[Dict]:
     if not api_key: return None
     print(f"[enrichment] Trying Apollo.io for {first_name} {last_name} @ {company}...")
