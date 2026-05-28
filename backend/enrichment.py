@@ -120,20 +120,23 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
 
 
 
-def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
+def enrich_via_pdl(email: str, api_key: str, name: str = "", company: str = "") -> Optional[Dict]:
     """
-    Call People Data Labs Person Enrichment API with a found email.
-    Returns a dict with LinkedIn, Twitter, GitHub, location, education, job info.
+    Call People Data Labs Person Enrichment API.
+    Pass email + name + company for best match rate.
     Free tier: 1000 calls/month.
     """
     if not api_key or not email:
         return None
 
-    print(f"[enrichment] PDL enrichment for {email}...")
-    url = "https://api.peopledatalabs.com/v2/person/enrich?" + urllib.parse.urlencode({
-        "email": email,
-        "pretty": "false"
-    })
+    params: dict = {"email": email, "pretty": "false", "min_likelihood": "2"}
+    if name:
+        params["name"] = name
+    if company:
+        params["company"] = company
+
+    print(f"[enrichment] PDL search — email={email}, name={name or 'n/a'}, company={company or 'n/a'}")
+    url = "https://api.peopledatalabs.com/v2/person/enrich?" + urllib.parse.urlencode(params)
 
     headers = {
         "X-Api-Key": api_key,
@@ -141,11 +144,13 @@ def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
         "Accept": "application/json",
     }
     data = _fetch_json(url, headers)
-    print(f"[enrichment] PDL raw response status: {data.get('status') if data else 'None'}")
+    status = data.get("status") if data else "None"
+    print(f"[enrichment] PDL status={status} | likelihood={data.get('likelihood','?') if data else '?'}")
 
     if not data or data.get("status") != 200:
-        print(f"[enrichment] PDL: no match or error — {data.get('status') if data else 'no response'} | {str(data)[:200]}")
+        print(f"[enrichment] PDL: no match — status={status} | {str(data)[:300]}")
         return None
+
 
 
     p = data.get("data", {})
