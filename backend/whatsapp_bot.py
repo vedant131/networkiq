@@ -187,8 +187,7 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
                     lines.append(f"🏭 *Industry:* {pdl_data['pdl_industry'].title()}")
                 socials = []
                 if pdl_data.get("pdl_linkedin"):
-                    lnk = pdl_data["pdl_linkedin"].replace("https://www.linkedin.com/in/", "").strip("/")
-                    socials.append(f"🔗 LinkedIn: linkedin.com/in/{lnk}")
+                    socials.append(f"🔗 LinkedIn: linkedin.com/in/{pdl_data['pdl_linkedin']}")
                 if pdl_data.get("pdl_twitter"):
                     socials.append(f"🐦 Twitter: @{pdl_data['pdl_twitter']}")
                 if pdl_data.get("pdl_github"):
@@ -244,8 +243,7 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             # Social profiles
             socials = []
             if result.get("pdl_linkedin"):
-                lnk = result["pdl_linkedin"].replace("https://www.linkedin.com/in/", "").strip("/")
-                socials.append(f"🔗 LinkedIn: linkedin.com/in/{lnk}")
+                socials.append(f"🔗 LinkedIn: linkedin.com/in/{result['pdl_linkedin']}")
             if result.get("pdl_twitter"):
                 socials.append(f"🐦 Twitter: @{result['pdl_twitter']}")
             if result.get("pdl_github"):

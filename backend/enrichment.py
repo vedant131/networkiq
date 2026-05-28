@@ -150,61 +150,66 @@ def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
 
     p = data.get("data", {})
 
-    # ── Extract clean fields ──────────────────────────────────────────
-    # LinkedIn
-    linkedin_url = None
-    for profile in p.get("profiles", []):
-        if profile.get("network") == "linkedin":
-            linkedin_url = profile.get("url")
-            break
+    # ── Use PDL's top-level fields directly (much more reliable) ─────────
+    # LinkedIn — PDL gives it as "linkedin.com/in/username" without https://
+    raw_linkedin = p.get("linkedin_url") or ""
+    if raw_linkedin:
+        # Normalize to just the username slug
+        linkedin_slug = raw_linkedin.replace("https://www.linkedin.com/in/", "") \
+                                    .replace("https://linkedin.com/in/", "") \
+                                    .replace("linkedin.com/in/", "") \
+                                    .strip("/")
+    else:
+        linkedin_slug = None
 
-    # Twitter
-    twitter_handle = None
-    for profile in p.get("profiles", []):
-        if profile.get("network") == "twitter":
-            twitter_handle = profile.get("username") or profile.get("url", "").split("/")[-1]
-            break
-
-    # GitHub
-    github_handle = None
-    for profile in p.get("profiles", []):
-        if profile.get("network") == "github":
-            github_handle = profile.get("username") or profile.get("url", "").split("/")[-1]
-            break
+    # Twitter / GitHub — top-level usernames
+    twitter_handle = p.get("twitter_username") or None
+    github_handle  = p.get("github_username")  or None
 
     # Location
-    loc = p.get("location_name") or p.get("city") or ""
+    loc = p.get("location_name") or ""
 
-    # Education
+    # Current job — direct top-level fields
+    job_title   = p.get("job_title", "")
+    job_company = p.get("job_company_name", "")
+    if job_title and job_company:
+        current_job = f"{job_title.title()} at {job_company.title()}"
+    elif job_title:
+        current_job = job_title.title()
+    else:
+        current_job = None
+
+    # Education — keep up to 2, remove duplicates
+    seen_schools = set()
     education = []
-    for edu in p.get("education", [])[:2]:
-        school = edu.get("school", {}).get("name", "")
-        degree = edu.get("degrees", [None])[0] or ""
-        if school:
-            education.append(f"{degree} @ {school}".strip(" @"))
-
-    # Current job
-    current_job = None
-    for exp in p.get("experience", []):
-        if exp.get("is_primary"):
-            title = exp.get("title", {}).get("name", "")
-            company = exp.get("company", {}).get("name", "")
-            current_job = f"{title} at {company}".strip(" at")
+    for edu in p.get("education", []):
+        school = (edu.get("school") or {}).get("name", "")
+        if not school or school in seen_schools:
+            continue
+        seen_schools.add(school)
+        degrees = edu.get("degrees", [])
+        degree = degrees[0].title() if degrees else ""
+        education.append(f"{degree} @ {school.title()}".strip(" @"))
+        if len(education) >= 2:
             break
 
+    # Industry
+    industry = (p.get("industry") or "").replace(" ", " ").title()
+
     result = {
-        "pdl_linkedin":  linkedin_url,
+        "pdl_linkedin":  linkedin_slug,
         "pdl_twitter":   twitter_handle,
         "pdl_github":    github_handle,
-        "pdl_location":  loc,
+        "pdl_location":  loc.title() if loc else "",
         "pdl_education": education,
         "pdl_job":       current_job,
         "pdl_full_name": p.get("full_name", ""),
-        "pdl_industry":  p.get("industry", ""),
+        "pdl_industry":  industry,
     }
 
     print(f"[enrichment] PDL success: {result}")
     return result
+
 
 
 def find_email_waterfall(first_name: str, last_name: str, company: str, settings) -> Optional[Dict]:
