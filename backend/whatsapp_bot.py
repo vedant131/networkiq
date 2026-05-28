@@ -166,7 +166,43 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
         existing_email = str(row.get('Email Address', row.get('email', '')))
         
         if existing_email and existing_email.strip() and existing_email.lower() != "nan":
-            return _twiml(f"✅ You already have the email for {full_name}:\n\n📧 {existing_email}")
+            # Email already in DB — still enrich with PDL to show full profile
+            import enrichment
+            from config import settings
+            import os
+
+            pdl_key = getattr(settings, "pdl_api_key", None) or os.getenv("PDL_API_KEY", "")
+            pdl_data = enrichment.enrich_via_pdl(existing_email, pdl_key) if pdl_key else None
+
+            lines = [f"✨ *{full_name}* — Full Profile\n"]
+            lines.append(f"📧 *Email:* {existing_email}")
+            lines.append(f"   _(already saved)_")
+
+            if pdl_data:
+                if pdl_data.get("pdl_job"):
+                    lines.append(f"\n💼 *Current Role:* {pdl_data['pdl_job']}")
+                if pdl_data.get("pdl_location"):
+                    lines.append(f"📍 *Location:* {pdl_data['pdl_location']}")
+                if pdl_data.get("pdl_industry"):
+                    lines.append(f"🏭 *Industry:* {pdl_data['pdl_industry'].title()}")
+                socials = []
+                if pdl_data.get("pdl_linkedin"):
+                    lnk = pdl_data["pdl_linkedin"].replace("https://www.linkedin.com/in/", "").strip("/")
+                    socials.append(f"🔗 LinkedIn: linkedin.com/in/{lnk}")
+                if pdl_data.get("pdl_twitter"):
+                    socials.append(f"🐦 Twitter: @{pdl_data['pdl_twitter']}")
+                if pdl_data.get("pdl_github"):
+                    socials.append(f"💻 GitHub: github.com/{pdl_data['pdl_github']}")
+                if socials:
+                    lines.append(f"\n*Social:*")
+                    lines.extend(socials)
+                if pdl_data.get("pdl_education"):
+                    lines.append(f"\n🎓 *Education:*")
+                    for edu in pdl_data["pdl_education"]:
+                        lines.append(f"   • {edu}")
+            
+            return _twiml("\n".join(lines))
+
             
         if not company or company.lower() == "nan":
             return _twiml(f"❌ Cannot find email for {full_name} because they don't have a company listed.")
