@@ -168,13 +168,12 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
         if existing_email and existing_email.strip() and existing_email.lower() != "nan":
             # Email already in DB — enrich with PDL for full social profile
             import enrichment
-            from config import settings
+            import os
 
-            pdl_key = settings.pdl_api_key   # now properly in config.py
-            print(f"[bot] PDL key present: {'yes' if pdl_key else 'NO - missing PDL_API_KEY'}")
+            pdl_key = os.getenv("PDL_API_KEY", "")
+            print(f"[bot] Enrich path — PDL key={'SET' if pdl_key else 'MISSING'}, email={existing_email}")
             pdl_data = enrichment.enrich_via_pdl(existing_email, pdl_key) if pdl_key else None
-            print(f"[bot] PDL result for {existing_email}: {'found' if pdl_data else 'no record'}")
-
+            print(f"[bot] PDL result: {'found' if pdl_data else 'no record / key missing'}")
 
             lines = [f"✨ *{full_name}* — Full Profile\n"]
             lines.append(f"📧 *Email:* {existing_email}")
@@ -183,7 +182,6 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             if pdl_data:
                 if pdl_data.get("pdl_headline"):
                     lines.append(f"\n💡 _{pdl_data['pdl_headline']}_")
-
                 if pdl_data.get("pdl_job"):
                     job_line = f"\n💼 *Current Role:* {pdl_data['pdl_job']}"
                     if pdl_data.get("pdl_years_exp"):
@@ -193,8 +191,6 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
                     lines.append(f"📍 *Location:* {pdl_data['pdl_location']}")
                 if pdl_data.get("pdl_industry"):
                     lines.append(f"🏭 *Industry:* {pdl_data['pdl_industry']}")
-
-                # Direct contact
                 contact_lines = []
                 if pdl_data.get("pdl_phone"):
                     contact_lines.append(f"📞 *Phone:* {pdl_data['pdl_phone']}")
@@ -203,8 +199,6 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
                 if contact_lines:
                     lines.append("\n*Contact:*")
                     lines.extend(contact_lines)
-
-                # Social
                 socials = []
                 if pdl_data.get("pdl_linkedin"):
                     conn = f" ({pdl_data['pdl_connections']} connections)" if pdl_data.get("pdl_connections") else ""
@@ -216,22 +210,19 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
                 if socials:
                     lines.append("\n*Social:*")
                     lines.extend(socials)
-
-                # Career history
                 if pdl_data.get("pdl_past_experience"):
                     lines.append("\n📋 *Career History:*")
                     for exp in pdl_data["pdl_past_experience"]:
                         lines.append(f"   • {exp}")
-
-                 # Education
                 if pdl_data.get("pdl_education"):
                     lines.append("\n🎓 *Education:*")
                     for edu in pdl_data["pdl_education"]:
                         lines.append(f"   • {edu}")
             else:
-                lines.append("\n_ℹ️ No social profile found for this person in PDL's database._")
+                lines.append("\n_ℹ️ No social data found in PDL's database for this person._")
 
             return _twiml("\n".join(lines))
+
 
 
             
