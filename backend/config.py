@@ -23,10 +23,11 @@ class Settings:
 
     # ── Contact Enrichment (Waterfall) ─────────────────────────────────────────
     hunter_api_key:        str = os.getenv("HUNTER_API_KEY", "")
-    apollo_api_key:        str = os.getenv("APOLLO_API_KEY", "")
-    snov_client_id:        str = os.getenv("SNOV_CLIENT_ID", "")
-    snov_client_secret:    str = os.getenv("SNOV_CLIENT_SECRET", "")
-    skrapp_api_key:        str = os.getenv("SKRAPP_API_KEY", "")
+    apollo_api_key:         str = os.getenv("APOLLO_API_KEY", "")
+    pdl_api_key:            str = os.getenv("PDL_API_KEY", "")
+    snov_client_id:         str = os.getenv("SNOV_CLIENT_ID", "")
+    snov_client_secret:     str = os.getenv("SNOV_CLIENT_SECRET", "")
+    skrapp_api_key:         str = os.getenv("SKRAPP_API_KEY", "")
 
     # Tier-1 company list for prestige scoring
     TIER_1_COMPANIES: set = {

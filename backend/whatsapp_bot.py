@@ -166,13 +166,15 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
         existing_email = str(row.get('Email Address', row.get('email', '')))
         
         if existing_email and existing_email.strip() and existing_email.lower() != "nan":
-            # Email already in DB — still enrich with PDL to show full profile
+            # Email already in DB — enrich with PDL for full social profile
             import enrichment
             from config import settings
-            import os
 
-            pdl_key = getattr(settings, "pdl_api_key", None) or os.getenv("PDL_API_KEY", "")
+            pdl_key = settings.pdl_api_key   # now properly in config.py
+            print(f"[bot] PDL key present: {'yes' if pdl_key else 'NO - missing PDL_API_KEY'}")
             pdl_data = enrichment.enrich_via_pdl(existing_email, pdl_key) if pdl_key else None
+            print(f"[bot] PDL result for {existing_email}: {'found' if pdl_data else 'no record'}")
+
 
             lines = [f"✨ *{full_name}* — Full Profile\n"]
             lines.append(f"📧 *Email:* {existing_email}")
@@ -221,13 +223,16 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
                     for exp in pdl_data["pdl_past_experience"]:
                         lines.append(f"   • {exp}")
 
-                # Education
+                 # Education
                 if pdl_data.get("pdl_education"):
                     lines.append("\n🎓 *Education:*")
                     for edu in pdl_data["pdl_education"]:
                         lines.append(f"   • {edu}")
+            else:
+                lines.append("\n_ℹ️ No social profile found for this person in PDL's database._")
 
             return _twiml("\n".join(lines))
+
 
             
         if not company or company.lower() == "nan":
