@@ -94,7 +94,13 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
         "api_key":    api_key
     })
 
-    data = _fetch_json(url)
+    # Hunter.io blocks Python-urllib user-agent — use a browser-like one
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+    }
+
+    data = _fetch_json(url, headers=headers)
     print(f"[enrichment] Hunter.io raw response: {json.dumps(data)[:300] if data else 'None'}")
 
     if data and isinstance(data.get("data"), dict) and data["data"].get("email"):
@@ -106,9 +112,10 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
 
     # Log the actual error so we can see it in Render logs
     if data and data.get("errors"):
-        print(f"[enrichment] Hunter.io error: {data['errors']}")
+        print(f"[enrichment] Hunter.io error details: {data['errors']}")
 
     return None
+
 
 
 
