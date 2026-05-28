@@ -12,25 +12,94 @@ def _fetch_json(url: str, headers: dict = None, data: bytes = None) -> dict:
         print(f"[enrichment] API request failed to {url}: {e}")
         return None
 
+
+# ── Known company → domain mapping (Hunter needs the domain, not company name) ─
+_COMPANY_DOMAINS = {
+    "google": "google.com",
+    "alphabet": "google.com",
+    "microsoft": "microsoft.com",
+    "amazon": "amazon.com",
+    "aws": "amazon.com",
+    "meta": "meta.com",
+    "facebook": "meta.com",
+    "apple": "apple.com",
+    "netflix": "netflix.com",
+    "uber": "uber.com",
+    "airbnb": "airbnb.com",
+    "twitter": "twitter.com",
+    "linkedin": "linkedin.com",
+    "salesforce": "salesforce.com",
+    "oracle": "oracle.com",
+    "ibm": "ibm.com",
+    "intel": "intel.com",
+    "nvidia": "nvidia.com",
+    "tesla": "tesla.com",
+    "spotify": "spotify.com",
+    "stripe": "stripe.com",
+    "paypal": "paypal.com",
+    "goldman sachs": "gs.com",
+    "jp morgan": "jpmorgan.com",
+    "jpmorgan": "jpmorgan.com",
+    "morgan stanley": "morganstanley.com",
+    "blackrock": "blackrock.com",
+    "black rock": "blackrock.com",
+    "mckinsey": "mckinsey.com",
+    "deloitte": "deloitte.com",
+    "pwc": "pwc.com",
+    "kpmg": "kpmg.com",
+    "accenture": "accenture.com",
+    "infosys": "infosys.com",
+    "wipro": "wipro.com",
+    "tcs": "tcs.com",
+    "tata consultancy": "tcs.com",
+    "citi": "citi.com",
+    "citibank": "citi.com",
+    "hsbc": "hsbc.com",
+    "barclays": "barclays.com",
+    "turiance": "turiance.com",
+    "turiance ai": "turiance.com",
+}
+
+def _company_to_domain(company: str) -> str:
+    """Convert a company name to its likely email domain."""
+    key = company.lower().strip()
+    if key in _COMPANY_DOMAINS:
+        return _COMPANY_DOMAINS[key]
+    # Generic fallback: strip common suffixes and add .com
+    clean = key.replace(" inc", "").replace(" ltd", "").replace(" llc", "").replace(" corp", "")
+    clean = "".join(c for c in clean if c.isalnum())
+    return f"{clean}.com"
+
 def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str) -> Optional[Dict]:
     if not api_key: return None
-    print(f"[enrichment] Trying Hunter.io for {first_name} {last_name} @ {company}...")
-    
+
+    domain = _company_to_domain(company)
+    print(f"[enrichment] Hunter.io: {first_name} {last_name} @ {company} → domain={domain}")
+
     url = "https://api.hunter.io/v2/email-finder?" + urllib.parse.urlencode({
         "first_name": first_name,
-        "last_name": last_name,
-        "company": company,
-        "api_key": api_key
+        "last_name":  last_name,
+        "domain":     domain,
+        "api_key":    api_key
     })
-    
+
     data = _fetch_json(url)
+    print(f"[enrichment] Hunter.io raw response: {json.dumps(data)[:300] if data else 'None'}")
+
     if data and isinstance(data.get("data"), dict) and data["data"].get("email"):
         return {
-            "email": data["data"]["email"],
-            "score": data["data"].get("score", 0),
+            "email":  data["data"]["email"],
+            "score":  data["data"].get("score", 0),
             "source": "Hunter.io"
         }
+
+    # Log the actual error so we can see it in Render logs
+    if data and data.get("errors"):
+        print(f"[enrichment] Hunter.io error: {data['errors']}")
+
     return None
+
+
 
 
 def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
