@@ -175,8 +175,10 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
         import enrichment
         from config import settings
         
-        first_name = full_name.split()[0]
-        last_name = " ".join(full_name.split()[1:]) if len(full_name.split()) > 1 else ""
+        # Normalize name: CSV names may be ALL CAPS — Hunter.io needs proper case
+        full_name_normalized = full_name.title()
+        first_name = full_name_normalized.split()[0]
+        last_name = " ".join(full_name_normalized.split()[1:]) if len(full_name_normalized.split()) > 1 else ""
         
         result = enrichment.find_email_waterfall(first_name, last_name, company, settings)
         
