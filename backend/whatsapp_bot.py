@@ -171,8 +171,13 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             import os
 
             pdl_key = os.getenv("PDL_API_KEY", "")
-            print(f"[bot] Enrich path — PDL key={'SET' if pdl_key else 'MISSING'}, email={existing_email}")
-            pdl_data = enrichment.enrich_via_pdl(existing_email, pdl_key) if pdl_key else None
+            print(f"[bot] Enrich path — PDL key={'SET' if pdl_key else 'MISSING'}, email={existing_email}, name={full_name}, company={company}")
+            pdl_data = enrichment.enrich_via_pdl(
+                email=existing_email,
+                api_key=pdl_key,
+                name=full_name,
+                company=company
+            ) if pdl_key else None
             print(f"[bot] PDL result: {'found' if pdl_data else 'no record / key missing'}")
 
             lines = [f"✨ *{full_name}* — Full Profile\n"]
