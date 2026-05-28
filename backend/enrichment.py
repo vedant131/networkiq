@@ -129,21 +129,42 @@ def enrich_via_pdl(email: str, api_key: str, name: str = "", company: str = "") 
     if not api_key or not email:
         return None
 
-    params: dict = {"email": email, "pretty": "false", "min_likelihood": "2"}
+    params: dict = {"email": email, "min_likelihood": 2}
     if name:
         params["name"] = name
     if company:
         params["company"] = company
 
-    print(f"[enrichment] PDL search — email={email}, name={name or 'n/a'}, company={company or 'n/a'}")
-    url = "https://api.peopledatalabs.com/v2/person/enrich?" + urllib.parse.urlencode(params)
+    print(f"[enrichment] PDL POST — email={email}, name={name or 'n/a'}, company={company or 'n/a'}")
+    url = "https://api.peopledatalabs.com/v2/person/enrich"
 
-    headers = {
-        "X-Api-Key": api_key,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-    }
-    data = _fetch_json(url, headers)
+    import json as _json
+    body = _json.dumps(params).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers={
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+    )
+    data = None
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = _json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        raw = e.read().decode()
+        print(f"[enrichment] PDL HTTP {e.code}: {raw[:400]}")
+        try:
+            data = _json.loads(raw)
+        except Exception:
+            data = None
+    except Exception as ex:
+        print(f"[enrichment] PDL request error: {ex}")
+        data = None
+
     status = data.get("status") if data else "None"
     print(f"[enrichment] PDL status={status} | likelihood={data.get('likelihood','?') if data else '?'}")
 

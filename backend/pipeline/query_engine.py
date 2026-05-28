@@ -159,14 +159,39 @@ def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = Non
     if intent.get("domains"):
         filtered = filtered[filtered["domain"].isin(intent["domains"])]
 
-    # Apply company hint — normalize spaces so 'black rock' matches 'BlackRock'
+    # Apply company hint — smart matching:
+    # "google" → matches "Google", "Google India", "Google LLC" (≤2 extra words)
+    # but NOT "Google Developer Student Club" (too many extra words = it's a club, not employer)
     if intent.get("company_hint"):
-        hint_norm = _normalize(intent["company_hint"])
-        hint_raw = intent["company_hint"].lower()
-        filtered = filtered[
-            filtered["company_clean"].str.lower().str.contains(hint_raw, regex=False, na=False) |
-            filtered["company_clean"].apply(lambda c: hint_norm in _normalize(str(c)))
-        ]
+        hint_raw = intent["company_hint"].lower().strip()
+        hint_norm = _normalize(hint_raw)
+        hint_words = hint_raw.split()
+
+        def _company_match(company_val: str) -> bool:
+            c = str(company_val).lower().strip()
+            c_norm = _normalize(c)
+            # Exact normalized match
+            if c_norm == hint_norm:
+                return True
+            # Company must START with the hint (handles "Google India", "Google LLC")
+            # and have at most 2 extra words (so clubs with 3+ extra words are excluded)
+            if c.startswith(hint_raw):
+                extra = c[len(hint_raw):].strip().split()
+                return len(extra) <= 2
+            # Also handle normalized version (removes spaces: "blackrock" matches "black rock")
+            if c_norm.startswith(hint_norm):
+                return True
+            return False
+
+        strict = filtered[filtered["company_clean"].apply(_company_match)]
+        if len(strict) > 0:
+            filtered = strict
+        else:
+            # Fallback: original substring match if strict found nothing
+            filtered = filtered[
+                filtered["company_clean"].str.lower().str.contains(hint_raw, regex=False, na=False)
+            ]
+
 
     # Apply extra UI filters
     if extra_filters:
