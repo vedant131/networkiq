@@ -150,11 +150,9 @@ def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
 
     p = data.get("data", {})
 
-    # ── Use PDL's top-level fields directly (much more reliable) ─────────
-    # LinkedIn — PDL gives it as "linkedin.com/in/username" without https://
+    # ── LinkedIn slug ──────────────────────────────────────────────────
     raw_linkedin = p.get("linkedin_url") or ""
     if raw_linkedin:
-        # Normalize to just the username slug
         linkedin_slug = raw_linkedin.replace("https://www.linkedin.com/in/", "") \
                                     .replace("https://linkedin.com/in/", "") \
                                     .replace("linkedin.com/in/", "") \
@@ -162,14 +160,14 @@ def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
     else:
         linkedin_slug = None
 
-    # Twitter / GitHub — top-level usernames
+    # ── Social handles ─────────────────────────────────────────────────
     twitter_handle = p.get("twitter_username") or None
     github_handle  = p.get("github_username")  or None
 
-    # Location
+    # ── Location ───────────────────────────────────────────────────────
     loc = p.get("location_name") or ""
 
-    # Current job — direct top-level fields
+    # ── Current job ────────────────────────────────────────────────────
     job_title   = p.get("job_title", "")
     job_company = p.get("job_company_name", "")
     if job_title and job_company:
@@ -179,7 +177,46 @@ def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
     else:
         current_job = None
 
-    # Education — keep up to 2, remove duplicates
+    # ── Headline ───────────────────────────────────────────────────────
+    headline = p.get("headline") or None
+
+    # ── Years of experience ────────────────────────────────────────────
+    years_exp = p.get("inferred_years_experience") or None
+
+    # ── Phone number (pick first mobile/work number) ───────────────────
+    phone = None
+    phones = p.get("phone_numbers") or []
+    if phones:
+        phone = phones[0]
+
+    # ── Personal email ─────────────────────────────────────────────────
+    personal_email = p.get("recommended_personal_email") or None
+    if not personal_email:
+        personal_emails = p.get("personal_emails") or []
+        if personal_emails:
+            personal_email = personal_emails[0]
+
+    # ── LinkedIn connections ───────────────────────────────────────────
+    connections = p.get("linkedin_connections") or None
+
+    # ── Career history — last 3 past roles (excluding current) ────────
+    past_experience = []
+    for exp in p.get("experience", []):
+        if exp.get("is_primary"):
+            continue
+        title   = (exp.get("title") or {}).get("name", "")
+        company = (exp.get("company") or {}).get("name", "")
+        end     = exp.get("end_date", "")
+        if title and company:
+            year = end[:4] if end else ""
+            label = f"{title.title()} @ {company.title()}"
+            if year:
+                label += f" (until {year})"
+            past_experience.append(label)
+        if len(past_experience) >= 3:
+            break
+
+    # ── Education — up to 2, deduplicated ─────────────────────────────
     seen_schools = set()
     education = []
     for edu in p.get("education", []):
@@ -193,22 +230,29 @@ def enrich_via_pdl(email: str, api_key: str) -> Optional[Dict]:
         if len(education) >= 2:
             break
 
-    # Industry
-    industry = (p.get("industry") or "").replace(" ", " ").title()
+    # ── Industry ───────────────────────────────────────────────────────
+    industry = (p.get("industry") or "").title()
 
     result = {
-        "pdl_linkedin":  linkedin_slug,
-        "pdl_twitter":   twitter_handle,
-        "pdl_github":    github_handle,
-        "pdl_location":  loc.title() if loc else "",
-        "pdl_education": education,
-        "pdl_job":       current_job,
-        "pdl_full_name": p.get("full_name", ""),
-        "pdl_industry":  industry,
+        "pdl_linkedin":        linkedin_slug,
+        "pdl_twitter":         twitter_handle,
+        "pdl_github":          github_handle,
+        "pdl_location":        loc.title() if loc else "",
+        "pdl_education":       education,
+        "pdl_job":             current_job,
+        "pdl_full_name":       p.get("full_name", ""),
+        "pdl_industry":        industry,
+        "pdl_headline":        headline,
+        "pdl_years_exp":       years_exp,
+        "pdl_phone":           phone,
+        "pdl_personal_email":  personal_email,
+        "pdl_connections":     connections,
+        "pdl_past_experience": past_experience,
     }
 
-    print(f"[enrichment] PDL success: {result}")
+    print(f"[enrichment] PDL success for {p.get('full_name','?')}: job={current_job}, phone={'yes' if phone else 'no'}, connections={connections}")
     return result
+
 
 
 

@@ -179,27 +179,54 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             lines.append(f"   _(already saved)_")
 
             if pdl_data:
+                if pdl_data.get("pdl_headline"):
+                    lines.append(f"\n💡 _{pdl_data['pdl_headline']}_")
+
                 if pdl_data.get("pdl_job"):
-                    lines.append(f"\n💼 *Current Role:* {pdl_data['pdl_job']}")
+                    job_line = f"\n💼 *Current Role:* {pdl_data['pdl_job']}"
+                    if pdl_data.get("pdl_years_exp"):
+                        job_line += f" · {pdl_data['pdl_years_exp']} yrs exp"
+                    lines.append(job_line)
                 if pdl_data.get("pdl_location"):
                     lines.append(f"📍 *Location:* {pdl_data['pdl_location']}")
                 if pdl_data.get("pdl_industry"):
-                    lines.append(f"🏭 *Industry:* {pdl_data['pdl_industry'].title()}")
+                    lines.append(f"🏭 *Industry:* {pdl_data['pdl_industry']}")
+
+                # Direct contact
+                contact_lines = []
+                if pdl_data.get("pdl_phone"):
+                    contact_lines.append(f"📞 *Phone:* {pdl_data['pdl_phone']}")
+                if pdl_data.get("pdl_personal_email"):
+                    contact_lines.append(f"✉️ *Personal Email:* {pdl_data['pdl_personal_email']}")
+                if contact_lines:
+                    lines.append("\n*Contact:*")
+                    lines.extend(contact_lines)
+
+                # Social
                 socials = []
                 if pdl_data.get("pdl_linkedin"):
-                    socials.append(f"🔗 LinkedIn: linkedin.com/in/{pdl_data['pdl_linkedin']}")
+                    conn = f" ({pdl_data['pdl_connections']} connections)" if pdl_data.get("pdl_connections") else ""
+                    socials.append(f"🔗 LinkedIn: linkedin.com/in/{pdl_data['pdl_linkedin']}{conn}")
                 if pdl_data.get("pdl_twitter"):
                     socials.append(f"🐦 Twitter: @{pdl_data['pdl_twitter']}")
                 if pdl_data.get("pdl_github"):
                     socials.append(f"💻 GitHub: github.com/{pdl_data['pdl_github']}")
                 if socials:
-                    lines.append(f"\n*Social:*")
+                    lines.append("\n*Social:*")
                     lines.extend(socials)
+
+                # Career history
+                if pdl_data.get("pdl_past_experience"):
+                    lines.append("\n📋 *Career History:*")
+                    for exp in pdl_data["pdl_past_experience"]:
+                        lines.append(f"   • {exp}")
+
+                # Education
                 if pdl_data.get("pdl_education"):
-                    lines.append(f"\n🎓 *Education:*")
+                    lines.append("\n🎓 *Education:*")
                     for edu in pdl_data["pdl_education"]:
                         lines.append(f"   • {edu}")
-            
+
             return _twiml("\n".join(lines))
 
             
@@ -231,30 +258,51 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             lines.append(f"📧 *Email:* {email}")
             lines.append(f"   _via {source} · Confidence {score}%_")
 
-            if result.get("pdl_job"):
-                lines.append(f"\n💼 *Current Role:* {result['pdl_job']}")
+            if result.get("pdl_headline"):
+                lines.append(f"\n💡 _{result['pdl_headline']}_")
 
+            if result.get("pdl_job"):
+                job_line = f"\n💼 *Current Role:* {result['pdl_job']}"
+                if result.get("pdl_years_exp"):
+                    job_line += f" · {result['pdl_years_exp']} yrs exp"
+                lines.append(job_line)
             if result.get("pdl_location"):
                 lines.append(f"📍 *Location:* {result['pdl_location']}")
-
             if result.get("pdl_industry"):
-                lines.append(f"🏭 *Industry:* {result['pdl_industry'].title()}")
+                lines.append(f"🏭 *Industry:* {result['pdl_industry']}")
+
+            # Direct contact
+            contact_lines = []
+            if result.get("pdl_phone"):
+                contact_lines.append(f"📞 *Phone:* {result['pdl_phone']}")
+            if result.get("pdl_personal_email"):
+                contact_lines.append(f"✉️ *Personal Email:* {result['pdl_personal_email']}")
+            if contact_lines:
+                lines.append("\n*Contact:*")
+                lines.extend(contact_lines)
 
             # Social profiles
             socials = []
             if result.get("pdl_linkedin"):
-                socials.append(f"🔗 LinkedIn: linkedin.com/in/{result['pdl_linkedin']}")
+                conn = f" ({result['pdl_connections']} connections)" if result.get("pdl_connections") else ""
+                socials.append(f"🔗 LinkedIn: linkedin.com/in/{result['pdl_linkedin']}{conn}")
             if result.get("pdl_twitter"):
                 socials.append(f"🐦 Twitter: @{result['pdl_twitter']}")
             if result.get("pdl_github"):
                 socials.append(f"💻 GitHub: github.com/{result['pdl_github']}")
-
             if socials:
-                lines.append(f"\n*Social:*")
+                lines.append("\n*Social:*")
                 lines.extend(socials)
 
+            # Career history
+            if result.get("pdl_past_experience"):
+                lines.append("\n📋 *Career History:*")
+                for exp in result["pdl_past_experience"]:
+                    lines.append(f"   • {exp}")
+
+            # Education
             if result.get("pdl_education"):
-                lines.append(f"\n🎓 *Education:*")
+                lines.append("\n🎓 *Education:*")
                 for edu in result["pdl_education"]:
                     lines.append(f"   • {edu}")
 
