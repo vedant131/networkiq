@@ -37,6 +37,15 @@ DOMAIN_MAP = {
     "Finance":      ["finance", "fintech", "banking"],
 }
 
+# Words that indicate a club / organisation / program — NOT an employer
+# Used to exclude false positives like "Google Developer Student Club"
+_NON_EMPLOYER_WORDS = {
+    "club", "chapter", "student", "society", "bootcamp", "ambassador",
+    "volunteer", "community", "fellowship", "academy", "circle", "council",
+    "association", "program", "programme", "initiative", "network", "forum",
+    "cell", "wing", "committee", "team member", "member",
+}
+
 
 def _normalize(text: str) -> str:
     """Remove spaces and lowercase — so 'black rock' matches 'BlackRock'."""
@@ -91,9 +100,13 @@ Valid domains: ["AI/ML","Backend","Frontend","DevOps/Cloud","Finance","General"]
 For company_hint, extract the exact company name as written (e.g. 'black rock' stays 'black rock').
 
 Query: "{query}"
-Return only valid JSON, no markdown."""
+Return only valid JSON, no markdown, no code fences."""
         res = model.generate_content(prompt)
-        text = res.text.strip().strip('```json').strip('```').strip()
+        # Strip any markdown fences Gemini might still add
+        text = res.text.strip()
+        for fence in ("```json", "```JSON", "```"):
+            text = text.replace(fence, "")
+        text = text.strip()
         parsed = json.loads(text)
         parsed.setdefault("label", query)
         parsed.setdefault("keywords", re.findall(r"\b\w{3,}\b", query.lower()))
@@ -132,6 +145,42 @@ Return only valid JSON."""
         return _extract_offline(query)
 
 
+def _is_employer(company_val: str, hint_raw: str, hint_norm: str) -> bool:
+    """
+    True if company_val is a genuine employer matching the hint.
+
+    Rules:
+    1. Exact normalized match → always accept.
+    2. Company starts with hint AND has ≤2 extra words AND none of those extra
+       words are in _NON_EMPLOYER_WORDS (clubs, student groups, etc.).
+    3. Normalized start-match (handles 'BlackRock' vs 'black rock').
+    """
+    c = str(company_val).lower().strip()
+    c_norm = _normalize(c)
+
+    # Exact match
+    if c_norm == hint_norm:
+        return True
+
+    # Starts-with match
+    if c.startswith(hint_raw):
+        extra_str = c[len(hint_raw):].strip()
+        extra_words = extra_str.split()
+        if len(extra_words) <= 2:
+            # Reject if any extra word is a non-employer signal
+            if any(w in _NON_EMPLOYER_WORDS for w in extra_words):
+                return False
+            return True
+        # More than 2 extra words → almost certainly a club/org
+        return False
+
+    # Normalized start-match (e.g. "blackrock" starts with "blackrock" for "black rock")
+    if c_norm.startswith(hint_norm):
+        return True
+
+    return False
+
+
 def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = None) -> tuple[list[dict], str]:
     """
     Parse query, filter df, re-rank, return (list_of_records, interpretation_label).
@@ -159,39 +208,26 @@ def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = Non
     if intent.get("domains"):
         filtered = filtered[filtered["domain"].isin(intent["domains"])]
 
-    # Apply company hint — smart matching:
-    # "google" → matches "Google", "Google India", "Google LLC" (≤2 extra words)
-    # but NOT "Google Developer Student Club" (too many extra words = it's a club, not employer)
+    # Apply company hint — smart employer matching
+    # Excludes club/org/student members even if the company name contains the hint
     if intent.get("company_hint"):
         hint_raw = intent["company_hint"].lower().strip()
         hint_norm = _normalize(hint_raw)
-        hint_words = hint_raw.split()
 
-        def _company_match(company_val: str) -> bool:
-            c = str(company_val).lower().strip()
-            c_norm = _normalize(c)
-            # Exact normalized match
-            if c_norm == hint_norm:
-                return True
-            # Company must START with the hint (handles "Google India", "Google LLC")
-            # and have at most 2 extra words (so clubs with 3+ extra words are excluded)
-            if c.startswith(hint_raw):
-                extra = c[len(hint_raw):].strip().split()
-                return len(extra) <= 2
-            # Also handle normalized version (removes spaces: "blackrock" matches "black rock")
-            if c_norm.startswith(hint_norm):
-                return True
-            return False
-
-        strict = filtered[filtered["company_clean"].apply(_company_match)]
+        strict = filtered[
+            filtered["company_clean"].apply(
+                lambda c: _is_employer(c, hint_raw, hint_norm)
+            )
+        ]
         if len(strict) > 0:
             filtered = strict
         else:
-            # Fallback: original substring match if strict found nothing
+            # Fallback: plain substring match if strict found nothing
             filtered = filtered[
-                filtered["company_clean"].str.lower().str.contains(hint_raw, regex=False, na=False)
+                filtered["company_clean"].str.lower().str.contains(
+                    re.escape(hint_raw), regex=True, na=False
+                )
             ]
-
 
     # Apply extra UI filters
     if extra_filters:
@@ -202,7 +238,6 @@ def process_query(df: pd.DataFrame, query: str, extra_filters: dict | None = Non
     had_company_filter = bool(intent.get("company_hint"))
 
     # If nothing matched AND we had a specific company filter, return empty
-    # so the bot can say "nobody found at X" instead of showing everyone
     if len(filtered) == 0 and had_company_filter:
         return [], f"No one in your network at {intent['company_hint'].title()}"
 

@@ -40,15 +40,16 @@ def _read_li_csv(data: bytes, aliases: dict) -> pd.DataFrame:
                 buf = io.BytesIO(data)
                 df  = pd.read_csv(buf, skiprows=skip, encoding=enc,
                                   on_bad_lines="skip", low_memory=False)
-                # A valid LinkedIn CSV has at least 2 rows and 2 columns
+                # A valid LinkedIn CSV has at least 1 row and 2 columns
                 if len(df) >= 1 and len(df.columns) >= 2:
                     # Check if the header row looks like real data columns
                     lowered = [c.strip().lower() for c in df.columns]
                     if any(k in lowered for k in aliases.keys()):
                         df.columns = lowered
-                        return df
+                        return df  # Bug fix #17: early return stops all 18 combos
             except Exception:
                 continue
+
     raise ValueError("Could not parse LinkedIn CSV — unrecognised format.")
 
 
@@ -151,18 +152,19 @@ def ingest_zip(zip_bytes: bytes) -> tuple[pd.DataFrame, dict]:
                 phone_data = data
                 found["phones"] = name
 
-    if connections_data is None:
-        # Fallback: find any CSV with "connection" loosely
-        for name in names:
-            if name.endswith(".csv") and "connect" in name.lower():
-                connections_data = zf.read(name)
-                found["connections"] = name
-                break
+        # Fallback: find any CSV with "connect" loosely — must stay INSIDE with block
         if connections_data is None:
-            raise ValueError(
-                "Could not find Connections.csv inside the ZIP. "
-                "Make sure you downloaded 'Connections' in your LinkedIn data export."
-            )
+            for name in names:
+                if name.endswith(".csv") and "connect" in name.lower():
+                    connections_data = zf.read(name)
+                    found["connections"] = name
+                    break
+
+    if connections_data is None:
+        raise ValueError(
+            "Could not find Connections.csv inside the ZIP. "
+            "Make sure you downloaded 'Connections' in your LinkedIn data export."
+        )
 
     df = _read_connections(connections_data)
 

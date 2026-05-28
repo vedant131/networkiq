@@ -85,6 +85,7 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
     if not api_key: return None
 
     domain = _company_to_domain(company)
+    # Bug fix #15: don't log the URL with api_key embedded — log domain only
     print(f"[enrichment] Hunter.io: {first_name} {last_name} @ {company} → domain={domain}")
 
     url = "https://api.hunter.io/v2/email-finder?" + urllib.parse.urlencode({
@@ -101,7 +102,8 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
     }
 
     data = _fetch_json(url, headers=headers)
-    print(f"[enrichment] Hunter.io raw response: {json.dumps(data)[:300] if data else 'None'}")
+    # Log response without exposing the key
+    print(f"[enrichment] Hunter.io response: {json.dumps(data)[:200] if data else 'None'}")
 
     if data and isinstance(data.get("data"), dict) and data["data"].get("email"):
         return {
@@ -110,11 +112,11 @@ def _find_via_hunter(first_name: str, last_name: str, company: str, api_key: str
             "source": "Hunter.io"
         }
 
-    # Log the actual error so we can see it in Render logs
     if data and data.get("errors"):
         print(f"[enrichment] Hunter.io error details: {data['errors']}")
 
     return None
+
 
 
 
@@ -347,7 +349,7 @@ def _find_via_snov(first_name: str, last_name: str, company: str, client_id: str
         
     access_token = token_data["access_token"]
     
-    domain = company.lower().replace(" ", "") + ".com"
+    domain = _company_to_domain(company)  # Bug fix #5: use proper domain lookup
     
     url = "https://api.snov.io/v1/get-emails-from-names"
     payload = json.dumps({
@@ -401,11 +403,31 @@ def _find_via_skrapp(first_name: str, last_name: str, company: str, api_key: str
 
 def find_email_waterfall(first_name: str, last_name: str, company: str, settings) -> Optional[Dict]:
     """
-    Attempts to find an email. Currently simplified to use ONLY Hunter.io.
+    Waterfall email finder: Hunter → Apollo → Snov → Skrapp.
+    Returns first successful result, or None if all fail.
     """
     # 1. Hunter.io
     res = _find_via_hunter(first_name, last_name, company, settings.hunter_api_key)
-    if res: return res
-    
-    print(f"[enrichment] Hunter exhausted. No email found for {first_name} {last_name}.")
+    if res:
+        return res
+
+    # 2. Apollo.io
+    res = _find_via_apollo(first_name, last_name, company, settings.apollo_api_key)
+    if res:
+        return res
+
+    # 3. Snov.io
+    res = _find_via_snov(
+        first_name, last_name, company,
+        settings.snov_client_id, settings.snov_client_secret
+    )
+    if res:
+        return res
+
+    # 4. Skrapp.io
+    res = _find_via_skrapp(first_name, last_name, company, settings.skrapp_api_key)
+    if res:
+        return res
+
+    print(f"[enrichment] All sources exhausted. No email found for {first_name} {last_name} @ {company}.")
     return None

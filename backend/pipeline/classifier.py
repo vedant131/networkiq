@@ -24,7 +24,7 @@ CATEGORY_RULES: dict[str, list[str]] = {
         "data science", "bi analyst", "business intelligence", "llm",
     ],
     "Recruiter/HR": [
-        "recruiter", "recruiting", "talent", "hr ", "human resources",
+        "recruiter", "recruiting", "talent", "hr", "human resources",
         "hrbp", "staffing", "hiring", "people operations", "people ops",
         "talent acquisition", "sourcer", "headhunter", "campus recruiter",
     ],
@@ -63,7 +63,7 @@ DOMAIN_RULES: dict[str, list[str]] = {
     "Data Engineering":["data engineer", "etl", "pipeline", "spark", "hadoop", "databricks"],
     "Finance":         ["finance", "fintech", "banking", "investment", "trading", "quant"],
     "Healthcare":      ["health", "medical", "biotech", "pharma", "clinical"],
-    "Product":         ["product manager", "pm ", "product lead", "product owner"],
+    "Product":         ["product manager", " pm", "pm ", "product lead", "product owner"],
     "Design":          ["design", "ux", "ui/ux", "figma", "graphic"],
 }
 

@@ -4,20 +4,24 @@ whatsapp_bot.py — Core bot logic for NetworkIQ WhatsApp integration.
 Receives a parsed incoming message dict and returns a TwiML XML response string.
 All user data is loaded from SQLite by phone number.
 """
+import re
 import json
+import os
 from collections import Counter
 
 from db import (
     user_exists, load_user_data, get_user_info,
     delete_user_data, get_user_state, set_user_state,
+    update_user_connection_email,
 )
 from pipeline.query_engine import process_query
 from whatsapp_formatter import (
     format_results_page, format_stats, format_top_companies,
     format_help, format_not_registered, PAGE_SIZE,
 )
+from config import settings
 
-WEBSITE_URL = "http://localhost:3000"  # Will be overridden by config
+WEBSITE_URL = settings.website_url  # Bug fix #9: read from settings, not hardcoded
 
 
 def _twiml(message: str) -> str:
@@ -126,8 +130,7 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
         return _twiml(format_top_companies(top_cos))
 
     # ── Enrich Contact Command ─────────────────────────────────────────────────
-    import re
-    # Match patterns like: "get email for Raman", "i want gmail of Raman", "whats the email of Raman", "enrich Raman"
+    # Match patterns like: "get email for Raman", "enrich Raman", "contact info of Raman"
     email_match = re.search(r'(?:email|gmail|contact info)(?:\s+for|\s+of)?\s+([a-zA-Z\s]+)', text_lower)
     is_enrich_cmd = text_lower.startswith("enrich ")
     
@@ -144,21 +147,27 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
         if df is None:
             return _twiml("⚠️ Could not load your data.")
             
-        # Find connection by name
+        # Find connection by name (Bug fix #8: use regex=False to prevent injection)
         if 'full_name' in df.columns:
-            # Try exact first name match if it's a single word, else substring
             if " " not in target_name:
-                # If they just said "Raman", try matching first name specifically or substring
-                matches = df[df['full_name'].str.lower().str.contains(r'\b' + re.escape(target_name.lower()) + r'\b', na=False)]
+                # Single word — match as whole word with regex=True but escaped
+                matches = df[df['full_name'].str.lower().str.contains(
+                    r'\b' + re.escape(target_name.lower()) + r'\b', regex=True, na=False
+                )]
                 if matches.empty:
-                    matches = df[df['full_name'].str.lower().str.contains(target_name.lower(), na=False)]
+                    matches = df[df['full_name'].str.lower().str.contains(
+                        re.escape(target_name.lower()), regex=True, na=False
+                    )]
             else:
-                matches = df[df['full_name'].str.lower().str.contains(target_name.lower(), na=False)]
+                matches = df[df['full_name'].str.lower().str.contains(
+                    re.escape(target_name.lower()), regex=True, na=False
+                )]
         else:
-            return _twiml("⚠️ Missing name column in database. Please re-upload.")
-            
+            return _twiml("\u26a0\ufe0f Missing name column in database. Please re-upload.")
+
         if matches.empty:
-            return _twiml(f"❌ Couldn't find anyone named '{target_name}' in your connections.")
+            # Bug fix #16: show title-cased name, not all-lowercase
+            return _twiml(f"\u274c Couldn't find anyone named '{target_name.title()}' in your connections.")
             
         row = matches.iloc[0]
         full_name = str(row.get('full_name', ''))
@@ -233,17 +242,17 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             
         if not company or company.lower() == "nan":
             return _twiml(f"❌ Cannot find email for {full_name} because they don't have a company listed.")
-            
+
         # Call Waterfall API
         import enrichment
-        from config import settings
-        
+
         # Normalize name: CSV names may be ALL CAPS — Hunter.io needs proper case
         full_name_normalized = full_name.title()
         first_name = full_name_normalized.split()[0]
         last_name = " ".join(full_name_normalized.split()[1:]) if len(full_name_normalized.split()) > 1 else ""
-        
+
         result = enrichment.find_email_waterfall(first_name, last_name, company, settings)
+
         
         if result:
             email = result["email"]
@@ -251,17 +260,26 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             source = result.get("source", "API")
 
             # Save email to DB
-            from db import update_user_connection_email
             update_user_connection_email(from_phone, full_name, company, email)
 
-            # ── Build rich profile message with PDL data ──────────────
+            # Bug fix #2: Call PDL to get full social profile for newly found contacts
+            import enrichment as _enrichment
+            pdl_key = os.getenv("PDL_API_KEY", "")
+            if pdl_key:
+                pdl_data = _enrichment.enrich_via_pdl(
+                    email=email, api_key=pdl_key,
+                    name=full_name, company=company
+                )
+                if pdl_data:
+                    result.update(pdl_data)
+
+            # ── Build rich profile message ──────────────────────────────
             lines = [f"✨ *{full_name}* — Full Profile\n"]
             lines.append(f"📧 *Email:* {email}")
             lines.append(f"   _via {source} · Confidence {score}%_")
 
             if result.get("pdl_headline"):
                 lines.append(f"\n💡 _{result['pdl_headline']}_")
-
             if result.get("pdl_job"):
                 job_line = f"\n💼 *Current Role:* {result['pdl_job']}"
                 if result.get("pdl_years_exp"):
@@ -271,8 +289,6 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
                 lines.append(f"📍 *Location:* {result['pdl_location']}")
             if result.get("pdl_industry"):
                 lines.append(f"🏭 *Industry:* {result['pdl_industry']}")
-
-            # Direct contact
             contact_lines = []
             if result.get("pdl_phone"):
                 contact_lines.append(f"📞 *Phone:* {result['pdl_phone']}")
@@ -281,8 +297,6 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             if contact_lines:
                 lines.append("\n*Contact:*")
                 lines.extend(contact_lines)
-
-            # Social profiles
             socials = []
             if result.get("pdl_linkedin"):
                 conn = f" ({result['pdl_connections']} connections)" if result.get("pdl_connections") else ""
@@ -294,20 +308,17 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             if socials:
                 lines.append("\n*Social:*")
                 lines.extend(socials)
-
-            # Career history
             if result.get("pdl_past_experience"):
                 lines.append("\n📋 *Career History:*")
                 for exp in result["pdl_past_experience"]:
                     lines.append(f"   • {exp}")
-
-            # Education
             if result.get("pdl_education"):
                 lines.append("\n🎓 *Education:*")
                 for edu in result["pdl_education"]:
                     lines.append(f"   • {edu}")
 
             return _twiml("\n".join(lines))
+
         else:
             return _twiml(f"❌ Sorry, our waterfall engines couldn't find a verified corporate email for {full_name} at {company}.")
 

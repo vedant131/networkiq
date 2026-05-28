@@ -8,6 +8,7 @@ Automatically uses:
 import json
 import io
 import os
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -31,17 +32,33 @@ else:
 
 # ── Connection helpers ─────────────────────────────────────────────────────────
 
+# SQLite: one persistent connection per thread (check_same_thread=False is safe
+# because we serialise via threading.local — each thread gets its own conn).
+_local = threading.local()
+
 def _pg_conn():
     # Render internal URLs start with "postgresql://...@dpg-" — no SSL needed
     # External URLs (Supabase etc.) need SSL
     needs_ssl = "pooler.supabase.com" in DATABASE_URL or "supabase.co" in DATABASE_URL
-    if needs_ssl:
-        return psycopg2.connect(DATABASE_URL, sslmode="require")
-    return psycopg2.connect(DATABASE_URL)
+    # Reuse per-thread connection if still open
+    conn = getattr(_local, "pg_conn", None)
+    if conn is not None:
+        try:
+            conn.cursor().execute("SELECT 1")
+            return conn
+        except Exception:
+            pass  # stale — create a fresh one below
+    conn = psycopg2.connect(DATABASE_URL, sslmode="require") if needs_ssl else psycopg2.connect(DATABASE_URL)
+    _local.pg_conn = conn
+    return conn
 
 def _sq_conn():
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
+    """Return a thread-local SQLite connection (persistent, no repeated open/close)."""
+    conn = getattr(_local, "sq_conn", None)
+    if conn is None:
+        conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        _local.sq_conn = conn
     return conn
 
 
