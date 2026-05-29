@@ -234,11 +234,7 @@ export default function LandingPage({ onUpload }) {
             ))}
           </div>
 
-          {/* CTA */}
-          <a href={WA_LINK} target="_blank" rel="noopener noreferrer"
-            className="liquid-glass rounded-full px-5 py-2.5 text-sm text-white hover:scale-[1.03] transition-transform hidden sm:block">
-            Begin Journey
-          </a>
+          {/* Nav links end */}
         </nav>
 
         {/* ── Hero content ── */}
