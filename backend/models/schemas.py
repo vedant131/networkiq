@@ -7,8 +7,8 @@ class QueryRequest(BaseModel):
 
 class MessageRequest(BaseModel):
     session_id: str
-    connection_id: str
-    message_type: Optional[str] = "networking"
+    connection_id: int
+    purpose: Optional[str] = "networking"
 
 class ExportRequest(BaseModel):
     session_id: str
