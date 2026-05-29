@@ -174,13 +174,13 @@ export default function App() {
         )}
 
         {/* ── Search + filters ── */}
-        <div className="glass-panel" style={{ marginBottom: 16, padding: '16px', position: 'relative', zIndex: 20 }}>
+        <div className="glass-panel" style={{ marginBottom: 16, padding: '16px', position: 'relative', zIndex: 50 }}>
           <QueryBar onQuery={handleQuery} onReset={resetFilters} label={queryLabel} />
           <FilterPanel connections={connections} onChange={handleFilterChange} />
         </div>
 
         {/* ── Results List ── */}
-        <div className="glass-panel" style={{ overflow: 'hidden', marginBottom: 32 }}>
+        <div className="glass-panel" style={{ overflow: 'hidden', marginBottom: 32, position: 'relative', zIndex: 10 }}>
           <NetworkTable connections={filtered} onContact={setContactTarget} />
         </div>
 
