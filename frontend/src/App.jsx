@@ -160,14 +160,25 @@ export default function App() {
 
         <div style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 16px 80px', width: '100%', flex: 1 }}>
 
-        {/* ── Overview Panel ── */}
-        {insights && <IntelligenceOverview insights={insights} connections={connections} />}
-
         {/* ── Banners ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
           {fileType === 'zip' && foundFiles && <ZipBanner foundFiles={foundFiles} />}
           {whatsappLinked && <WhatsAppBanner phone={linkedPhone} />}
         </div>
+
+        {/* ── Search + filters ── */}
+        <div className="glass-panel" style={{ marginBottom: 16, padding: '16px' }}>
+          <QueryBar onQuery={handleQuery} onReset={resetFilters} label={queryLabel} />
+          <FilterPanel connections={connections} onChange={handleFilterChange} />
+        </div>
+
+        {/* ── Results List ── */}
+        <div className="glass-panel" style={{ overflow: 'hidden', marginBottom: 32 }}>
+          <NetworkTable connections={filtered} onContact={setContactTarget} />
+        </div>
+
+        {/* ── Overview Panel ── */}
+        {insights && <IntelligenceOverview insights={insights} connections={connections} />}
 
         {/* ── Smart Recommendations ── */}
         {recommendations.length > 0 && (
@@ -183,17 +194,6 @@ export default function App() {
             <InsightsDashboard insights={insights} />
           </div>
         )}
-
-        {/* ── Search + filters ── */}
-        <div className="glass-panel" style={{ marginBottom: 16, padding: '16px' }}>
-          <QueryBar onQuery={handleQuery} onReset={resetFilters} label={queryLabel} />
-          <FilterPanel connections={connections} onChange={handleFilterChange} />
-        </div>
-
-        {/* ── Results List ── */}
-        <div className="glass-panel" style={{ overflow: 'hidden' }}>
-          <NetworkTable connections={filtered} onContact={setContactTarget} />
-        </div>
       </div>
 
       {contactTarget && (
