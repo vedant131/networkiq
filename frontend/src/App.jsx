@@ -9,6 +9,7 @@ import MessageModal from './components/MessageModal'
 import ContactDrawer from './components/ContactDrawer'
 import MatchmakerDrawer from './components/MatchmakerDrawer'
 import ExportButton from './components/ExportButton'
+import { apiUrl } from './api'
 import { searchConnections } from './queryEngine'
 
 /* ── Connection age utility ──────────────────────────────────── */
