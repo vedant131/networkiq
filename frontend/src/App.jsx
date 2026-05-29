@@ -217,24 +217,39 @@ function CommandNav({ total, onReset, onInsights, showInsights }) {
     <header style={{
       position: 'sticky', top: 16, zIndex: 90,
       maxWidth: 1200, margin: '0 auto', width: 'calc(100% - 32px)',
-      background: 'rgba(10,10,10,0.65)', border: '1px solid rgba(255,255,255,0.08)',
-      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-      borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+      background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)',
+      backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+      borderRadius: '99px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
     }}>
-      <div style={{ padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src={import.meta.env.BASE_URL + 'logo.svg'} alt="NetWorkIQ" height="28" style={{ display:'block', filter: 'brightness(1.2)' }} />
+      <div style={{ padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <img src={import.meta.env.BASE_URL + 'logo.svg'} alt="NetWorkIQ" height="26" style={{ display:'block', opacity: 0.9 }} />
+          <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
           {total != null && (
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 20 }}>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 500, letterSpacing: '0.02em' }}>
               {total} connections
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={onInsights}>
-            {showInsights ? 'Close Analytics' : 'Analytics'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={onInsights} style={{
+            background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)',
+            fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: '8px 16px', borderRadius: 99,
+            transition: 'color 0.2s', fontFamily: 'inherit'
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+          onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+          >
+            {showInsights ? 'Close Analytics' : 'View Analytics'}
           </button>
-          <button className="btn btn-primary liquid-glass" onClick={onReset}>
+          <button onClick={onReset} style={{
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+            color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            padding: '8px 20px', borderRadius: 99, transition: 'all 0.2s', fontFamily: 'inherit'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'scale(1.02)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.transform = 'scale(1)' }}
+          >
             New Upload
           </button>
         </div>
