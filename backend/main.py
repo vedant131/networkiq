@@ -289,40 +289,36 @@ async def match_profile(req: MatchRequest):
     if df is None:
         raise HTTPException(404, "Session not found.")
 
-    if not settings.openai_api_key:
-        raise HTTPException(500, "AI matching requires OpenAI API Key to be configured.")
+    # ── AI Mode ──────────────────────────────────────────────────────────────
+    if settings.ai_mode == "openai" and settings.openai_api_key:
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=settings.openai_api_key)
 
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=settings.openai_api_key)
-
-        # 1. Summarize user profile
-        profile_prompt = f"""Extract the core professional identity from this text (a resume or list of interests).
+            profile_prompt = f"""Extract the core professional identity from this text (a resume or list of interests).
 Keep it very brief (1-2 sentences).
 Input: {req.profile_text}"""
-        
-        prof_res = client.chat.completions.create(
-            model=settings.openai_model,
-            messages=[{"role": "user", "content": profile_prompt}],
-            temperature=0.3,
-        )
-        user_summary = prof_res.choices[0].message.content.strip()
+            
+            prof_res = client.chat.completions.create(
+                model=settings.openai_model,
+                messages=[{"role": "user", "content": profile_prompt}],
+                temperature=0.3,
+            )
+            user_summary = prof_res.choices[0].message.content.strip()
 
-        # 2. Pick top matches
-        # For cost/speed, we sample the top 100 highest scored connections to evaluate
-        top_candidates = df.sort_values(by="score", ascending=False).head(100)
-        contacts_json = []
-        for idx, row in top_candidates.iterrows():
-            contacts_json.append({
-                "id": int(idx),
-                "name": str(row.get("full_name", "")),
-                "title": str(row.get("position_clean", "")),
-                "company": str(row.get("company_clean", "")),
-                "category": str(row.get("category", "")),
-                "seniority": str(row.get("seniority", ""))
-            })
-        
-        match_prompt = f"""The user is described as: "{user_summary}"
+            top_candidates = df.sort_values(by="score", ascending=False).head(100)
+            contacts_json = []
+            for idx, row in top_candidates.iterrows():
+                contacts_json.append({
+                    "id": int(idx),
+                    "name": str(row.get("full_name", "")),
+                    "title": str(row.get("position_clean", "")),
+                    "company": str(row.get("company_clean", "")),
+                    "category": str(row.get("category", "")),
+                    "seniority": str(row.get("seniority", ""))
+                })
+            
+            match_prompt = f"""The user is described as: "{user_summary}"
 Here is a JSON list of top people in their network:
 {json.dumps(contacts_json)}
 
@@ -330,55 +326,145 @@ Task: Identify exactly 3 to 5 people from this list who would be the BEST people
 
 Return ONLY a valid JSON array of objects, with each object having exactly these keys:
 - "id": the integer id of the connection
-- "reason": A brief, personalized explanation of WHY the user should contact them (e.g. "She is a Technical Recruiter at Google, perfect for your SWE aspirations").
-- "icebreaker": A 1-sentence suggested opening message for the user to send them.
+- "reason": A brief, personalized explanation of WHY the user should contact them.
+- "icebreaker": A 1-sentence suggested opening message.
 No markdown formatting, just raw JSON."""
 
-        match_res = client.chat.completions.create(
-            model=settings.openai_model,
-            messages=[{"role": "user", "content": match_prompt}],
-            temperature=0.3,
-        )
-        raw_json = match_res.choices[0].message.content.strip()
-        if raw_json.startswith("```json"):
-            raw_json = raw_json[7:-3]
-        if raw_json.startswith("```"):
-            raw_json = raw_json[3:-3]
+            match_res = client.chat.completions.create(
+                model=settings.openai_model,
+                messages=[{"role": "user", "content": match_prompt}],
+                temperature=0.3,
+            )
+            raw_json = match_res.choices[0].message.content.strip()
+            if raw_json.startswith("```json"):
+                raw_json = raw_json[7:-3]
+            if raw_json.startswith("```"):
+                raw_json = raw_json[3:-3]
+                
+            matches_data = json.loads(raw_json)
             
-        matches_data = json.loads(raw_json)
-        
-        # Hydrate matches
-        hydrated = []
-        for m in matches_data:
-            c_id = m.get("id")
-            if c_id in df.index:
-                row = df.loc[c_id]
-                tags = row.get("tags", [])
-                if isinstance(tags, str):
-                    try:
-                        tags = json.loads(tags)
-                    except:
-                        tags = []
-                hydrated.append({
-                    "id": c_id,
-                    "full_name": str(row.get("full_name", "")),
-                    "job_title_clean": str(row.get("position_clean", "")),
-                    "company": str(row.get("company_clean", "")),
-                    "category": str(row.get("category", "Other")),
-                    "seniority": str(row.get("seniority", "Unknown")),
-                    "tags": tags if isinstance(tags, list) else [],
-                    "reason": m.get("reason", ""),
-                    "icebreaker": m.get("icebreaker", "")
-                })
-        
-        return {
-            "summary": user_summary,
-            "matches": hydrated
-        }
+            hydrated = []
+            for m in matches_data:
+                c_id = m.get("id")
+                if c_id in df.index:
+                    row = df.loc[c_id]
+                    tags = row.get("tags", [])
+                    if isinstance(tags, str):
+                        try:
+                            tags = json.loads(tags)
+                        except:
+                            tags = []
+                    hydrated.append({
+                        "id": c_id,
+                        "full_name": str(row.get("full_name", "")),
+                        "job_title_clean": str(row.get("position_clean", "")),
+                        "company": str(row.get("company_clean", "")),
+                        "category": str(row.get("category", "Other")),
+                        "seniority": str(row.get("seniority", "Unknown")),
+                        "tags": tags if isinstance(tags, list) else [],
+                        "reason": m.get("reason", ""),
+                        "icebreaker": m.get("icebreaker", "")
+                    })
+            
+            return {
+                "summary": user_summary,
+                "matches": hydrated
+            }
 
-    except Exception as e:
-        print(f"[match_profile] Error: {e}")
-        raise HTTPException(500, f"AI Matching failed: {e}")
+        except Exception as e:
+            print(f"[match_profile] OpenAI Error: {e}")
+            # Fall through to offline mode
+
+    # ── Offline Mode (Fallback) ─────────────────────────────────────────────
+    # Use keyword matching to find the best contacts
+    text_lower = req.profile_text.lower()
+    
+    # 1. Simple heuristic summary
+    keywords = []
+    if "ml " in text_lower or "machine learning" in text_lower or "data" in text_lower:
+        keywords.append("Data Science & ML")
+    if "frontend" in text_lower or "react" in text_lower or "ui" in text_lower:
+        keywords.append("Frontend Development")
+    if "student" in text_lower or "fresher" in text_lower or "junior" in text_lower:
+        keywords.append("Entry-Level Professional")
+    
+    summary = f"Profile identified: {', '.join(keywords) if keywords else 'Professional looking to expand their network'}."
+
+    # 2. Score connections based on keywords
+    # Prioritise high-score connections and recruiters
+    candidates = df.copy()
+    
+    def score_match(row):
+        base_score = float(row.get("score", 0))
+        cat = str(row.get("category", "")).lower()
+        title = str(row.get("position_clean", "")).lower()
+        
+        match_score = base_score
+        
+        # Boost recruiters
+        if cat == "recruiter/hr" or "recruiter" in title or "talent" in title:
+            match_score += 0.5
+            
+        # Boost founders
+        if cat == "founder/entrepreneur" or "founder" in title or "ceo" in title:
+            match_score += 0.3
+            
+        # Keyword matching
+        if "ml " in text_lower or "data" in text_lower:
+            if cat == "data scientist" or "data" in title or "machine learning" in title:
+                match_score += 0.6
+                
+        if "frontend" in text_lower or "react" in text_lower:
+            if "frontend" in title or "react" in title or "software engineer" in cat:
+                match_score += 0.6
+                
+        return match_score
+        
+    candidates["match_score"] = candidates.apply(score_match, axis=1)
+    
+    # Take top 4
+    top_matches = candidates.sort_values(by="match_score", ascending=False).head(4)
+    
+    hydrated = []
+    for idx, row in top_matches.iterrows():
+        tags = row.get("tags", [])
+        if isinstance(tags, str):
+            try:
+                tags = json.loads(tags)
+            except:
+                tags = []
+                
+        name = str(row.get("full_name", ""))
+        first_name = name.split()[0] if name else "there"
+        company = str(row.get("company_clean", "their company"))
+        title = str(row.get("position_clean", "professional"))
+        
+        if row.get("category") == "Recruiter/HR":
+            reason = f"They are in talent acquisition at {company}. Great person to ask about open roles."
+            icebreaker = f"Hi {first_name}, I'm exploring opportunities in your space and would love to connect and learn about the talent landscape at {company}!"
+        elif row.get("category") == "Founder/Entrepreneur":
+            reason = f"They are building {company}. Founders are often looking for ambitious freshers."
+            icebreaker = f"Hi {first_name}, I admire what you're building at {company}! I'm looking to learn from experienced founders and would love to connect."
+        else:
+            reason = f"They are a {row.get('seniority', 'senior')} {title} at {company}. Excellent for mentorship and career guidance."
+            icebreaker = f"Hi {first_name}, I saw your impressive work as a {title} at {company}. As someone starting out, I'd love to connect and follow your journey!"
+            
+        hydrated.append({
+            "id": int(idx),
+            "full_name": name,
+            "job_title_clean": title,
+            "company": str(row.get("company_clean", "")),
+            "category": str(row.get("category", "Other")),
+            "seniority": str(row.get("seniority", "Unknown")),
+            "tags": tags if isinstance(tags, list) else [],
+            "reason": reason,
+            "icebreaker": icebreaker
+        })
+
+    return {
+        "summary": summary,
+        "matches": hydrated
+    }
 
 
 @app.get("/api/insights/{session_id}")
