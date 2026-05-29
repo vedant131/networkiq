@@ -1,8 +1,8 @@
-// Shared API base URL — reads the value baked in at build time by vite.config.js
+// Shared API base URL
 // In production: points to Render backend
 // In development: empty string (Vite proxy handles /api/* → localhost:8000)
-const API_BASE = (typeof __API_BASE__ !== 'undefined' && __API_BASE__)
-  ? __API_BASE__
+const API_BASE = import.meta.env.PROD 
+  ? 'https://linkedin-network-intelligence.onrender.com'
   : ''
 
 export const apiUrl = (path) => `${API_BASE}${path}`
