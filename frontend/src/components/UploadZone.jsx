@@ -1,6 +1,42 @@
 import { useState, useRef } from 'react'
 
-export default function UploadZone({ onUpload }) {
+export default function UploadZone({ onUpload, dark = false }) {
+  // Colour tokens that switch between light and dark modes
+  const T = dark ? {
+    bg:          'transparent',
+    cardBg:      'rgba(255,255,255,0.04)',
+    text:        '#ffffff',
+    textMuted:   'rgba(255,255,255,0.55)',
+    border:      'rgba(255,255,255,0.12)',
+    stepBg:      'rgba(255,255,255,0.06)',
+    stepBorder:  'rgba(255,255,255,0.08)',
+    inactiveDot: 'rgba(255,255,255,0.15)',
+    inactiveLine:'rgba(255,255,255,0.12)',
+    optionBg:    'rgba(255,255,255,0.05)',
+    optionBgRec: 'rgba(10,102,194,0.15)',
+    optionBorder:'rgba(255,255,255,0.12)',
+    dropBg:      'rgba(255,255,255,0.04)',
+    dropBorder:  'rgba(255,255,255,0.2)',
+    privacyBg:   'rgba(10,102,194,0.12)',
+    privacyBor:  'rgba(10,102,194,0.3)',
+  } : {
+    bg:          'var(--li-bg)',
+    cardBg:      '#ffffff',
+    text:        'var(--li-text)',
+    textMuted:   'var(--li-text-2)',
+    border:      'rgba(0,0,0,0.12)',
+    stepBg:      '#fafafa',
+    stepBorder:  'rgba(0,0,0,0.08)',
+    inactiveDot: 'rgba(0,0,0,0.15)',
+    inactiveLine:'rgba(0,0,0,0.12)',
+    optionBg:    'var(--li-bg)',
+    optionBgRec: 'rgba(10,102,194,0.04)',
+    optionBorder:'rgba(0,0,0,0.12)',
+    dropBg:      'var(--li-bg)',
+    dropBorder:  'rgba(0,0,0,0.15)',
+    privacyBg:   'rgba(10,102,194,0.06)',
+    privacyBor:  'rgba(10,102,194,0.15)',
+  }
   const [isDragging, setDragging]   = useState(false)
   const [fileName, setFileName]     = useState(null)
   const [selectedFile, setSelected] = useState(null)
@@ -55,6 +91,7 @@ export default function UploadZone({ onUpload }) {
             recommended
             icon="📦"
             title="Option 1 — Upload ZIP (recommended)"
+            T={T}
             steps={[
               'LinkedIn → Settings & Privacy',
               'Data Privacy → Get a copy of your data',
@@ -67,6 +104,7 @@ export default function UploadZone({ onUpload }) {
           <OptionCard
             icon="📄"
             title="Option 2 — Upload CSV only"
+            T={T}
             steps={[
               'Extract the ZIP file',
               'Find the "Connections" file inside',
@@ -81,7 +119,8 @@ export default function UploadZone({ onUpload }) {
       <div
         id="upload-dropzone"
         className={`upload-zone anim-stagger-3 hover-lift ${isDragging ? 'dragging' : ''}`}
-        style={{ padding: '32px 24px', textAlign: 'center', background: 'var(--li-bg)', marginBottom: 16 }}
+        style={{ padding: '32px 24px', textAlign: 'center', background: T.dropBg, marginBottom: 16,
+          border: `2px dashed ${T.dropBorder}`, borderRadius: 8 }}
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
@@ -90,12 +129,12 @@ export default function UploadZone({ onUpload }) {
         <div className="icon-float" style={{ fontSize: 36, marginBottom: 10 }}>
           {isDragging ? '📂' : '📁'}
         </div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--li-text)', marginBottom: 6 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: T.text, marginBottom: 6 }}>
           {isDragging
             ? <span style={{ color: 'var(--li-blue)' }}>Release to upload</span>
             : 'Drop your LinkedIn ZIP or CSV here'}
         </div>
-        <div style={{ fontSize: 13, color: 'var(--li-text-2)', marginBottom: 20 }}>
+        <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 20 }}>
           Accepts: <strong>Complete_LinkedInDataExport_*.zip</strong> or <strong>Connections.csv</strong>
         </div>
         <button
@@ -245,9 +284,9 @@ export default function UploadZone({ onUpload }) {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 52px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px 16px', background: 'var(--li-bg)',
+      minHeight: dark ? 'unset' : 'calc(100vh - 52px)',
+      display: 'flex', alignItems: dark ? 'flex-start' : 'center', justifyContent: 'center',
+      padding: dark ? '20px' : '24px 16px', background: T.bg,
     }}>
       <div className="anim-in" style={{ maxWidth: 640, width: '100%' }}>
 
@@ -272,8 +311,8 @@ export default function UploadZone({ onUpload }) {
           {/* Step indicator */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 0,
-            padding: '12px 28px', borderBottom: '1px solid rgba(0,0,0,0.08)',
-            background: '#fafafa',
+            padding: '12px 28px', borderBottom: `1px solid ${T.stepBorder}`,
+            background: T.stepBg,
           }}>
             {['Choose File', 'Connect WhatsApp'].map((label, i) => {
               const active = step === i + 1
@@ -283,7 +322,7 @@ export default function UploadZone({ onUpload }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{
                       width: 24, height: 24, borderRadius: '50%',
-                      background: done ? '#057642' : active ? '#0A66C2' : 'rgba(0,0,0,0.15)',
+                      background: done ? '#057642' : active ? '#0A66C2' : T.inactiveDot,
                       color: '#fff', fontSize: 11, fontWeight: 700,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
@@ -292,13 +331,13 @@ export default function UploadZone({ onUpload }) {
                     </div>
                     <span style={{
                       fontSize: 12, fontWeight: active ? 700 : 400,
-                      color: active ? '#0A66C2' : done ? '#057642' : 'var(--li-text-2)',
+                      color: active ? '#0A66C2' : done ? '#057642' : T.textMuted,
                     }}>{label}</span>
                   </div>
                   {i < 1 && (
                     <div style={{
                       flex: 1, height: 1, margin: '0 12px',
-                      background: done ? '#057642' : 'rgba(0,0,0,0.12)',
+                      background: done ? '#057642' : T.inactiveLine,
                     }}/>
                   )}
                 </div>
@@ -315,8 +354,8 @@ export default function UploadZone({ onUpload }) {
             margin: '0 28px 20px',
             display: 'flex', alignItems: 'flex-start', gap: 10,
             padding: '10px 14px', borderRadius: 6,
-            background: 'rgba(10,102,194,0.06)', border: '1px solid rgba(10,102,194,0.15)',
-            fontSize: 13, color: 'var(--li-text-2)',
+            background: T.privacyBg, border: `1px solid ${T.privacyBor}`,
+            fontSize: 13, color: T.textMuted,
           }}>
             <span style={{ fontSize: 16, flexShrink: 0 }}>🔒</span>
             <span>Your data is securely processed and stored in a private database linked to your WhatsApp number. This enables your 24/7 AI Bot. We never sell or share your data.</span>
@@ -328,12 +367,12 @@ export default function UploadZone({ onUpload }) {
   )
 }
 
-function OptionCard({ icon, title, steps, recommended }) {
+function OptionCard({ icon, title, steps, recommended, T }) {
   return (
     <div className="hover-lift" style={{
-      border: `1.5px solid ${recommended ? 'var(--li-blue)' : 'rgba(0,0,0,0.12)'}`,
+      border: `1.5px solid ${recommended ? 'var(--li-blue)' : T.optionBorder}`,
       borderRadius: 6, padding: '12px 14px',
-      background: recommended ? 'rgba(10,102,194,0.04)' : 'var(--li-bg)',
+      background: recommended ? T.optionBgRec : T.optionBg,
       position: 'relative',
     }}>
       {recommended && (
@@ -344,11 +383,11 @@ function OptionCard({ icon, title, steps, recommended }) {
         }}>RECOMMENDED</span>
       )}
       <div style={{ fontSize: 20, marginBottom: 6 }}>{icon}</div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--li-text)', marginBottom: 8 }}>{title}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: T.text, marginBottom: 8 }}>{title}</div>
       {steps.map((s, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
           <span style={{ color: 'var(--li-blue)', fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{i + 1}.</span>
-          <span style={{ fontSize: 11, color: 'var(--li-text-2)', lineHeight: 1.4 }}>{s}</span>
+          <span style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.4 }}>{s}</span>
         </div>
       ))}
     </div>

@@ -88,7 +88,7 @@ export default function LandingPage({ onUpload }) {
               <div style={{ fontSize:13, color:'rgba(255,255,255,0.65)' }}>Upload your LinkedIn data, then enter your WhatsApp number</div>
             </div>
             <div className="dark-upload-wrapper">
-              <UploadZone onUpload={onUpload} />
+              <UploadZone onUpload={onUpload} dark={true} />
             </div>
           </div>
 
@@ -185,31 +185,6 @@ export default function LandingPage({ onUpload }) {
 
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
-        .dark-upload-wrapper > div {
-          min-height: unset !important;
-          background: transparent !important;
-          padding: 20px !important;
-        }
-        .dark-upload-wrapper .li-card {
-          background: transparent !important;
-          box-shadow: none !important;
-          border: none !important;
-          margin-bottom: 0 !important;
-        }
-        .dark-upload-wrapper .upload-zone {
-          background: rgba(255,255,255,0.04) !important;
-          border: 2px dashed rgba(255,255,255,0.15) !important;
-          color: rgba(255,255,255,0.8) !important;
-        }
-        .dark-upload-wrapper .upload-zone:hover,
-        .dark-upload-wrapper .upload-zone.dragging {
-          border-color: rgba(37,211,102,0.5) !important;
-          background: rgba(37,211,102,0.05) !important;
-        }
-        .dark-upload-wrapper label,
-        .dark-upload-wrapper div {
-          color: rgba(255,255,255,0.7);
-        }
       `}</style>
     </div>
   )
