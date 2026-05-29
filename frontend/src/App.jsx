@@ -143,23 +143,17 @@ export default function App() {
         borderBottom: '1px solid rgba(255,255,255,0.07)',
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: 'linear-gradient(135deg, #0A66C2, #25D366)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, fontWeight: 900, color: '#fff', flexShrink: 0,
-            }}>N</div>
-            <span style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>NetworkIQ</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <img src="/logo.svg" alt="NetWorkIQ" height="36" style={{ display:'block', filter:'drop-shadow(0 0 6px rgba(0,229,255,0.4))' }} />
             <a
               href="https://www.linkedin.com/in/vedant-shinde-hello/"
               target="_blank"
               rel="noopener noreferrer"
               style={{
                 fontSize: 12, color: 'rgba(255,255,255,0.35)',
-                marginLeft: 4, textDecoration: 'none', transition: 'color 0.2s',
+                marginLeft: 6, textDecoration: 'none', transition: 'color 0.2s',
               }}
-              onMouseEnter={e => e.currentTarget.style.color = '#25D366'}
+              onMouseEnter={e => e.currentTarget.style.color = '#00e5ff'}
               onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
             >by Vedant Shinde ↗</a>
           </div>
@@ -264,11 +258,7 @@ function LiNav({ minimal, total, onReset, onInsights, showInsights }) {
     }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-            <rect width="34" height="34" rx="4" fill="#0A66C2"/>
-            <path d="M7 12h4.5v15H7V12zm2.25-7a2.25 2.25 0 110 4.5 2.25 2.25 0 010-4.5zM14 12h4.3v2.06h.06C19 12.82 20.67 12 22.5 12c4.5 0 5.5 3 5.5 6.9V27H23.5v-7.2c0-1.72-.03-3.93-2.4-3.93-2.4 0-2.77 1.87-2.77 3.8V27H14V12z" fill="white"/>
-          </svg>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'rgba(0,0,0,0.9)' }}>NetworkIQ</span>
+          <img src="/logo.svg" alt="NetWorkIQ" height="30" style={{ display:'block' }} />
           {!minimal && total != null && (
             <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', marginLeft: 4 }}>{total} connections</span>
           )}

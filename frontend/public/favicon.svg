@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <filter id="g" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Dark background -->
+  <rect width="64" height="64" rx="12" fill="#0a1628"/>
+  <!-- Pulse wave -->
+  <polyline
+    points="6,32 16,32 22,14 30,50 36,32 46,32"
+    stroke="#00e5ff"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+    filter="url(#g)"
+  />
+  <!-- IQ text bottom-right -->
+  <text x="38" y="56" font-family="'Courier New', monospace" font-size="13" font-weight="800" fill="#00e5ff" letter-spacing="0.5" filter="url(#g)">IQ</text>
+</svg>
