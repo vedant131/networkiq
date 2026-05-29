@@ -13,7 +13,7 @@ from fastapi.responses import StreamingResponse, PlainTextResponse
 import io
 
 from config import settings
-from models.schemas import QueryRequest, MessageRequest, ExportRequest
+from models.schemas import QueryRequest, MessageRequest, ExportRequest, MatchRequest
 from pipeline.ingestion import ingest_csv, ingest_zip
 from pipeline.cleaning import clean_dataframe
 from pipeline.classifier import classify_dataframe
@@ -280,6 +280,105 @@ Return only the message text. No greeting prefix."""
     }
     message = templates.get(purpose, templates["networking"])
     return {"message": message, "mode": "template"}
+
+
+@app.post("/api/match_profile")
+async def match_profile(req: MatchRequest):
+    """Analyze user's profile/resume and recommend the best contacts to reach out to."""
+    df = _sessions.get(req.session_id)
+    if df is None:
+        raise HTTPException(404, "Session not found.")
+
+    if not settings.openai_api_key:
+        raise HTTPException(500, "AI matching requires OpenAI API Key to be configured.")
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=settings.openai_api_key)
+
+        # 1. Summarize user profile
+        profile_prompt = f"""Extract the core professional identity from this text (a resume or list of interests).
+Keep it very brief (1-2 sentences).
+Input: {req.profile_text}"""
+        
+        prof_res = client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[{"role": "user", "content": profile_prompt}],
+            temperature=0.3,
+        )
+        user_summary = prof_res.choices[0].message.content.strip()
+
+        # 2. Pick top matches
+        # For cost/speed, we sample the top 100 highest scored connections to evaluate
+        top_candidates = df.sort_values(by="score", ascending=False).head(100)
+        contacts_json = []
+        for idx, row in top_candidates.iterrows():
+            contacts_json.append({
+                "id": int(idx),
+                "name": str(row.get("full_name", "")),
+                "title": str(row.get("position_clean", "")),
+                "company": str(row.get("company_clean", "")),
+                "category": str(row.get("category", "")),
+                "seniority": str(row.get("seniority", ""))
+            })
+        
+        match_prompt = f"""The user is described as: "{user_summary}"
+Here is a JSON list of top people in their network:
+{json.dumps(contacts_json)}
+
+Task: Identify exactly 3 to 5 people from this list who would be the BEST people for the user to reach out to (e.g., recruiters for their role, founders building in their space, senior people for mentorship).
+
+Return ONLY a valid JSON array of objects, with each object having exactly these keys:
+- "id": the integer id of the connection
+- "reason": A brief, personalized explanation of WHY the user should contact them (e.g. "She is a Technical Recruiter at Google, perfect for your SWE aspirations").
+- "icebreaker": A 1-sentence suggested opening message for the user to send them.
+No markdown formatting, just raw JSON."""
+
+        match_res = client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[{"role": "user", "content": match_prompt}],
+            temperature=0.3,
+        )
+        raw_json = match_res.choices[0].message.content.strip()
+        if raw_json.startswith("```json"):
+            raw_json = raw_json[7:-3]
+        if raw_json.startswith("```"):
+            raw_json = raw_json[3:-3]
+            
+        matches_data = json.loads(raw_json)
+        
+        # Hydrate matches
+        hydrated = []
+        for m in matches_data:
+            c_id = m.get("id")
+            if c_id in df.index:
+                row = df.loc[c_id]
+                tags = row.get("tags", [])
+                if isinstance(tags, str):
+                    try:
+                        tags = json.loads(tags)
+                    except:
+                        tags = []
+                hydrated.append({
+                    "id": c_id,
+                    "full_name": str(row.get("full_name", "")),
+                    "job_title_clean": str(row.get("position_clean", "")),
+                    "company": str(row.get("company_clean", "")),
+                    "category": str(row.get("category", "Other")),
+                    "seniority": str(row.get("seniority", "Unknown")),
+                    "tags": tags if isinstance(tags, list) else [],
+                    "reason": m.get("reason", ""),
+                    "icebreaker": m.get("icebreaker", "")
+                })
+        
+        return {
+            "summary": user_summary,
+            "matches": hydrated
+        }
+
+    except Exception as e:
+        print(f"[match_profile] Error: {e}")
+        raise HTTPException(500, f"AI Matching failed: {e}")
 
 
 @app.get("/api/insights/{session_id}")

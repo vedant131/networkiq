@@ -7,8 +7,8 @@ import QueryBar from './components/QueryBar'
 import InsightsDashboard from './components/InsightsDashboard'
 import MessageModal from './components/MessageModal'
 import ContactDrawer from './components/ContactDrawer'
+import MatchmakerDrawer from './components/MatchmakerDrawer'
 import ExportButton from './components/ExportButton'
-import { apiUrl } from './api'
 import { searchConnections } from './queryEngine'
 
 /* ── Connection age utility ──────────────────────────────────── */
@@ -54,6 +54,7 @@ export default function App() {
   const [insights, setInsights]       = useState(null)
   const [queryLabel, setQueryLabel]   = useState('')
   const [showInsights, setShowInsights] = useState(false)
+  const [showMatchmaker, setShowMatchmaker] = useState(false)
   const [showRecs, setShowRecs]         = useState(true)
   const [contactTarget, setContactTarget] = useState(null)
   const [messageTarget, setMessageTarget] = useState(null)
@@ -156,7 +157,8 @@ export default function App() {
       
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
         <CommandNav total={connections.length} onReset={() => setView('upload')}
-          onInsights={() => setShowInsights(v => !v)} showInsights={showInsights} />
+          onInsights={() => setShowInsights(v => !v)} showInsights={showInsights}
+          onMatchmaker={() => setShowMatchmaker(true)} />
 
         <div style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 16px 80px', width: '100%', flex: 1 }}>
 
@@ -205,6 +207,9 @@ export default function App() {
       {messageTarget && (
         <MessageModal connection={messageTarget} sessionId={sessionId} onClose={() => setMessageTarget(null)} />
       )}
+      {showMatchmaker && (
+        <MatchmakerDrawer sessionId={sessionId} onClose={() => setShowMatchmaker(false)} onMessage={openMessage} />
+      )}
       <ExportButton sessionId={sessionId} />
       </div>
     </div>
@@ -212,7 +217,7 @@ export default function App() {
 }
 
 /* ── Command Nav (Glassmorphic Top Bar) ───────────────────────── */
-function CommandNav({ total, onReset, onInsights, showInsights }) {
+function CommandNav({ total, onReset, onInsights, showInsights, onMatchmaker }) {
   return (
     <header style={{
       position: 'sticky', top: 16, zIndex: 90,
@@ -242,6 +247,18 @@ function CommandNav({ total, onReset, onInsights, showInsights }) {
           >
             {showInsights ? 'Close Analytics' : 'View Analytics'}
           </button>
+          
+          <button onClick={onMatchmaker} style={{
+            background: 'transparent', border: '1px solid rgba(52,211,153,0.3)', color: 'var(--accent-emerald)',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '8px 16px', borderRadius: 99,
+            transition: 'all 0.2s', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(52,211,153,0.1)'; e.currentTarget.style.borderColor = 'rgba(52,211,153,0.5)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(52,211,153,0.3)' }}
+          >
+            ✨ Match Me
+          </button>
+
           <button onClick={onReset} style={{
             background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
             color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer',

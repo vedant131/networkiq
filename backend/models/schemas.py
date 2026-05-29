@@ -13,3 +13,7 @@ class MessageRequest(BaseModel):
 class ExportRequest(BaseModel):
     session_id: str
     format: Optional[str] = "xlsx"
+
+class MatchRequest(BaseModel):
+    session_id: str
+    profile_text: str
