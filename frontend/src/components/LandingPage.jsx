@@ -6,6 +6,8 @@ import { ArrowRight, Check } from 'lucide-react'
 const WA_LINK    = 'https://wa.me/14155238886?text=join%20sometime-certainly'
 const CREAM      = '#E1E0CC'
 const CREAM_DIM  = 'rgba(225,224,204,0.7)'
+const BASE       = import.meta.env.BASE_URL  // '/networkiq/' on GH Pages, '/' locally
+
 
 /* ─── ANIMATION HELPERS ──────────────────────────────────────────────────── */
 const EASE_OUT = [0.16, 1, 0.3, 1]
@@ -65,6 +67,13 @@ function WordsPullUpMultiStyle({ segments, wrapClass = '', delay = 0 }) {
   )
 }
 
+/** Single animated character — hooks must be at component top level */
+function AnimatedChar({ char, index, total, scrollYProgress }) {
+  const charProgress = index / total
+  const opacity = useTransform(scrollYProgress, [charProgress - 0.1, charProgress + 0.05], [0.15, 1])
+  return <motion.span style={{ opacity, display: 'inline' }}>{char}</motion.span>
+}
+
 /** Character-by-character scroll-opacity reveal */
 function AnimatedParagraph({ text, className = '' }) {
   const ref = useRef(null)
@@ -75,18 +84,13 @@ function AnimatedParagraph({ text, className = '' }) {
   const chars = text.split('')
   return (
     <p ref={ref} className={className} aria-label={text}>
-      {chars.map((char, i) => {
-        const progress = i / chars.length
-        const opacity = useTransform(scrollYProgress, [progress - 0.1, progress + 0.05], [0.15, 1])
-        return (
-          <motion.span key={i} style={{ opacity, display: 'inline' }}>
-            {char}
-          </motion.span>
-        )
-      })}
+      {chars.map((char, i) => (
+        <AnimatedChar key={i} char={char} index={i} total={chars.length} scrollYProgress={scrollYProgress} />
+      ))}
     </p>
   )
 }
+
 
 /* ─── FEATURE CARD ───────────────────────────────────────────────────────── */
 function FeatureCard({ children, index }) {
@@ -132,7 +136,7 @@ export default function LandingPage({ onUpload }) {
             <nav className="bg-black rounded-b-2xl md:rounded-b-3xl px-4 py-2 md:px-8 pointer-events-auto">
               <div className="flex items-center gap-3 sm:gap-6 md:gap-12 lg:gap-14">
                 {/* Logo */}
-                <img src="/logo.svg" alt="NetWorkIQ" className="h-7 md:h-8 opacity-90" />
+                <img src={BASE + 'logo.svg'} alt="NetWorkIQ" className="h-7 md:h-8 opacity-90" />
                 {/* Divider */}
                 <div className="w-px h-4 bg-white/10" />
                 {[
@@ -401,7 +405,7 @@ export default function LandingPage({ onUpload }) {
 
       {/* ══ FOOTER ════════════════════════════════════════════════════════════ */}
       <footer className="bg-black border-t border-white/[0.06] py-8 px-6 text-center">
-        <img src="/logo.svg" alt="NetWorkIQ" className="h-7 mx-auto mb-4 opacity-60" />
+        <img src={BASE + 'logo.svg'} alt="NetWorkIQ" className="h-7 mx-auto mb-4 opacity-60" />
         <p className="text-gray-600 text-xs">
           Built by{' '}
           <a href="https://www.linkedin.com/in/vedant-shinde-hello/" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary transition-colors">
