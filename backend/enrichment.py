@@ -138,7 +138,7 @@ def enrich_via_pdl(email: str, api_key: str, name: str = "", company: str = "") 
         params["company"] = company
 
     print(f"[enrichment] PDL POST — email={email}, name={name or 'n/a'}, company={company or 'n/a'}")
-    url = "https://api.peopledatalabs.com/v2/person/enrich"
+    url = "https://api.peopledatalabs.com/v5/person/enrich"
 
     import json as _json
     body = _json.dumps(params).encode("utf-8")
@@ -284,25 +284,7 @@ def enrich_via_pdl(email: str, api_key: str, name: str = "", company: str = "") 
 
 
 
-def find_email_waterfall(first_name: str, last_name: str, company: str, settings) -> Optional[Dict]:
-    """
-    Finds email via Hunter.io, then auto-enriches with People Data Labs.
-    Returns combined result with email + social profile data.
-    """
-    # 1. Hunter.io — find the email
-    res = _find_via_hunter(first_name, last_name, company, settings.hunter_api_key)
-    if not res:
-        print(f"[enrichment] Hunter exhausted. No email found for {first_name} {last_name}.")
-        return None
 
-    # 2. PDL — enrich with social profiles (auto, no user interaction needed)
-    pdl_key = getattr(settings, "pdl_api_key", None) or __import__("os").getenv("PDL_API_KEY", "")
-    if pdl_key and res.get("email"):
-        pdl_data = enrich_via_pdl(res["email"], pdl_key)
-        if pdl_data:
-            res.update(pdl_data)
-
-    return res
 
 
 def _find_via_apollo(first_name: str, last_name: str, company: str, api_key: str) -> Optional[Dict]:
