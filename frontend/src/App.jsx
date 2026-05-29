@@ -174,7 +174,7 @@ export default function App() {
         )}
 
         {/* ── Search + filters ── */}
-        <div className="glass-panel" style={{ marginBottom: 16, padding: '16px' }}>
+        <div className="glass-panel" style={{ marginBottom: 16, padding: '16px', position: 'relative', zIndex: 20 }}>
           <QueryBar onQuery={handleQuery} onReset={resetFilters} label={queryLabel} />
           <FilterPanel connections={connections} onChange={handleFilterChange} />
         </div>
