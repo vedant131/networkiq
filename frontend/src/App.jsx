@@ -147,11 +147,18 @@ export default function App() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', display: 'flex', flexDirection: 'column' }}>
-      <CommandNav total={connections.length} onReset={() => setView('upload')}
-        onInsights={() => setShowInsights(v => !v)} showInsights={showInsights} />
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+      <video autoPlay loop muted playsInline
+        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4"
+      />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'rgba(0,0,0,0.7)', pointerEvents: 'none' }} />
+      
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <CommandNav total={connections.length} onReset={() => setView('upload')}
+          onInsights={() => setShowInsights(v => !v)} showInsights={showInsights} />
 
-      <div style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 16px 80px', width: '100%', flex: 1 }}>
+        <div style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 16px 80px', width: '100%', flex: 1 }}>
 
         {/* ── Overview Panel ── */}
         {insights && <IntelligenceOverview insights={insights} connections={connections} />}
@@ -165,7 +172,7 @@ export default function App() {
         {/* ── Smart Recommendations ── */}
         {recommendations.length > 0 && (
           <SmartRecommendations
-            recs={recommendations} open={showRecs} onToggle={() => setShowRecs(v => !v)}
+            recs={recommendations}
             onContact={setContactTarget} onMessage={(c) => { setMessageTarget(c) }}
           />
         )}
@@ -199,6 +206,7 @@ export default function App() {
         <MessageModal connection={messageTarget} sessionId={sessionId} onClose={() => setMessageTarget(null)} />
       )}
       <ExportButton sessionId={sessionId} />
+      </div>
     </div>
   )
 }
@@ -247,18 +255,34 @@ function IntelligenceOverview({ insights, connections }) {
     { label: 'Email Coverage', value: `${emailPct}%`,                  color: 'var(--accent-amber)', sub: `${withEmail} contacts` },
   ]
   return (
-    <div className="glass-panel" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 24, padding: '32px 24px', background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 100%)' }}>
-      {stats.map(s => (
-        <div key={s.label} className="anim-in" style={{ borderRight: '1px solid rgba(255,255,255,0.05)', padding: '0 20px' }}>
-          <div className="font-display" style={{ color: s.color, fontSize: 48, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 8, textShadow: `0 0 20px ${s.color}44` }}>
-            {s.value}
+    <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>
+      {/* Stats Panel */}
+      <div className="glass-panel" style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', padding: '32px 24px', background: 'rgba(255,255,255,0.03)' }}>
+        {stats.map(s => (
+          <div key={s.label} className="anim-in" style={{ borderRight: '1px solid rgba(255,255,255,0.05)', padding: '0 20px' }}>
+            <div className="font-display" style={{ color: s.color, fontSize: 48, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 8, textShadow: `0 0 20px ${s.color}44` }}>
+              {s.value}
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+              {s.label}
+            </div>
+            {s.sub && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>{s.sub}</div>}
           </div>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-            {s.label}
-          </div>
-          {s.sub && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>{s.sub}</div>}
+        ))}
+      </div>
+
+      {/* Persistent Bot QR Card */}
+      <div className="glass-panel" style={{ width: 280, padding: 20, display: 'flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.03)' }}>
+        <img 
+          src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('https://wa.me/14155238886?text=join%20sometime-certainly')}&margin=0&bgcolor=ffffff&color=000000`} 
+          alt="WhatsApp QR" 
+          style={{ width: 80, height: 80, borderRadius: 8, background: '#fff', padding: 4 }} 
+        />
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 4 }}>WhatsApp Bot</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>Scan to query your network from WhatsApp.</div>
         </div>
-      ))}
+      </div>
     </div>
   )
 }
@@ -318,13 +342,12 @@ function WhatsAppBanner({ phone }) {
 }
 
 /* ── Smart Recommendations (Cinematic) ──────────────────────── */
-function SmartRecommendations({ recs, open, onToggle, onContact, onMessage }) {
+function SmartRecommendations({ recs, onContact, onMessage }) {
   return (
     <div className="glass-panel" style={{ marginBottom: 24, overflow: 'hidden' }}>
-      <button onClick={onToggle} style={{
+      <div style={{
         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 20px', background: open ? 'rgba(255,255,255,0.02)' : 'transparent', border: 'none', cursor: 'pointer',
-        borderBottom: open ? '1px solid var(--border-light)' : 'none', transition: 'background 0.2s',
+        padding: '16px 20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-light)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 16 }}>⚡</span>
@@ -332,40 +355,37 @@ function SmartRecommendations({ recs, open, onToggle, onContact, onMessage }) {
             Smart Outreach <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>— {recs.length} recommended actions</span>
           </span>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>{open ? '▲' : '▼'}</span>
-      </button>
+      </div>
 
-      {open && (
-        <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {recs.map((r, i) => (
-            <div key={r.id ?? i} className="anim-fade" style={{
-              display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px',
-              borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
-              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
-            }}
-            onClick={() => onContact(r)}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)' }}
-            >
-              <div className="avatar" style={{ width: 40, height: 40, fontSize: 16 }}>
-                {r.full_name?.[0]?.toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: '#fff' }}>{r.full_name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.job_title_clean || r.job_title_raw} · <span style={{ color: 'var(--text-faint)' }}>{r.company}</span>
-                </div>
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--accent-amber)', opacity: 0.8, textAlign: 'right', flexShrink: 0 }}>
-                {r._reason}
-              </div>
-              <button className="btn btn-outline" onClick={e => { e.stopPropagation(); onMessage(r) }} style={{ padding: '6px 14px', fontSize: 12 }}>
-                Message
-              </button>
+      <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {recs.map((r, i) => (
+          <div key={r.id ?? i} className="anim-fade" style={{
+            display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px',
+            borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
+            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+          }}
+          onClick={() => onContact(r)}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)' }}
+          >
+            <div className="avatar" style={{ width: 40, height: 40, fontSize: 16 }}>
+              {r.full_name?.[0]?.toUpperCase()}
             </div>
-          ))}
-        </div>
-      )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#fff' }}>{r.full_name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {r.job_title_clean || r.job_title_raw} · <span style={{ color: 'var(--text-faint)' }}>{r.company}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--accent-amber)', opacity: 0.8, textAlign: 'right', flexShrink: 0 }}>
+              {r._reason}
+            </div>
+            <button className="btn btn-outline" onClick={e => { e.stopPropagation(); onMessage(r) }} style={{ padding: '6px 14px', fontSize: 12 }}>
+              Message
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
