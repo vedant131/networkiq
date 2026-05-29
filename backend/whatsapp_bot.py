@@ -177,7 +177,6 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
         if existing_email and existing_email.strip() and existing_email.lower() != "nan":
             # Email already in DB — enrich with PDL for full social profile
             import enrichment
-            import os
 
             pdl_key = os.getenv("PDL_API_KEY", "")
             print(f"[bot] Enrich path — PDL key={'SET' if pdl_key else 'MISSING'}, email={existing_email}, name={full_name}, company={company}")
@@ -263,10 +262,9 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
             update_user_connection_email(from_phone, full_name, company, email)
 
             # Bug fix #2: Call PDL to get full social profile for newly found contacts
-            import enrichment as _enrichment
             pdl_key = os.getenv("PDL_API_KEY", "")
             if pdl_key:
-                pdl_data = _enrichment.enrich_via_pdl(
+                pdl_data = enrichment.enrich_via_pdl(
                     email=email, api_key=pdl_key,
                     name=full_name, company=company
                 )
