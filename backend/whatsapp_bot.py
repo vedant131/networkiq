@@ -333,11 +333,57 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
     except Exception as e:
         return _twiml(f"❌ Error processing query: {str(e)[:100]}\n\nTry: 'find recruiters at Google'")
 
+    # ── Vibe Prospecting Hybrid Search ─────────────────────────────────────────
+    # If the user's query mentions BOTH a company AND a role, supplement their
+    # own network results with cold B2B prospects from Explorium's database.
+    vibe_key = settings.vibeprospecting_api_key
+    if vibe_key:
+        import vibeprospecting as _vp
+        from pipeline.query_engine import _extract_offline
+
+        intent = _extract_offline(text)
+        company_hint = intent.get("company_hint")
+        categories   = intent.get("categories", [])
+        keywords     = intent.get("keywords", [])
+
+        # Derive a job title string from category + keywords
+        role_hint = None
+        if categories:
+            role_hint = categories[0]  # e.g. "Recruiter/HR", "Software Engineer"
+        elif keywords:
+            # Use the most specific non-stop keyword as the role
+            stop = {"who", "find", "show", "me", "at", "in", "from", "the",
+                    "a", "an", "of", "and", "or", "for", "my", "all"}
+            non_stop = [w for w in keywords if w not in stop]
+            if non_stop:
+                role_hint = non_stop[0]
+
+        if company_hint and role_hint:
+            try:
+                seniority = intent.get("seniorities", [None])[0] if intent.get("seniorities") else None
+                hybrid = _vp.hybrid_search(
+                    user_network=results,
+                    company=company_hint.title(),
+                    job_title=role_hint,
+                    api_key=vibe_key,
+                    network_limit=3,
+                    vibe_limit=5,
+                    seniority=seniority,
+                )
+                if len(hybrid) > len(results):
+                    results = hybrid
+                    # Update label to show it's a hybrid result
+                    label = f"🤝 Your Network + 🌐 Vibe Prospecting: {label}"
+                    print(f"[bot] Hybrid search returned {len(results)} total ({len(hybrid) - min(3, len(results))} new from Vibe)")
+            except Exception as vibe_err:
+                print(f"[bot] Vibe Prospecting search failed (non-fatal): {vibe_err}")
+                # Fallback gracefully — still show network results
+    # ───────────────────────────────────────────────────────────────────────────
+
     total = len(results)
     page = 0
 
     if total == 0:
-        # Don't save state for empty results
         return _twiml(format_results_page(results, 0, 0, label))
 
     # Save pagination state
@@ -350,3 +396,4 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
 
     reply = format_results_page(results, page, total, label)
     return _twiml(reply)
+

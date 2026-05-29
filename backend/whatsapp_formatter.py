@@ -77,9 +77,19 @@ def format_results_page(results: list[dict], page: int, total_results: int,
         emoji = CATEGORY_EMOJI.get(category, "👤")
         dot = SENIORITY_DOT.get(seniority, "")
 
+        # Source badge — warm (own network) vs cold (Vibe Prospecting)
+        source = c.get("source", "network")
+        if source == "vibe":
+            source_badge = "🌐 _New Lead via Vibe Prospecting_"
+        else:
+            source_badge = "🤝 _Your Connection_"
+
         # Name + seniority dot
         line = f"{i}. *{name}* {emoji} {dot}".strip()
         lines.append(line)
+
+        # Source badge
+        lines.append(f"   {source_badge}")
 
         # Title & company
         if company and company != "—":
@@ -101,6 +111,10 @@ def format_results_page(results: list[dict], page: int, total_results: int,
         if contact_parts:
             lines.append(f"   {' | '.join(contact_parts)}")
 
+        # Tip for cold leads
+        if source == "vibe":
+            lines.append(f"   _Reply: enrich {name.split()[0]} to get email_")
+
         lines.append("")
 
     # Footer
@@ -111,6 +125,7 @@ def format_results_page(results: list[dict], page: int, total_results: int,
         lines.append("_That's all the results!_")
 
     return "\n".join(lines).strip()
+
 
 
 def format_stats(info: dict, df_summary: dict) -> str:

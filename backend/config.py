@@ -29,6 +29,11 @@ class Settings:
     snov_client_secret:     str = os.getenv("SNOV_CLIENT_SECRET", "")
     skrapp_api_key:         str = os.getenv("SKRAPP_API_KEY", "")
 
+    # ── Vibe Prospecting (Explorium) ────────────────────────────────────────────
+    # Sign up at https://app.vibeprospecting.ai → get API key from admin.explorium.ai
+    vibeprospecting_api_key: str = os.getenv("VIBEPROSPECTING_API_KEY", "")
+
+
     # Tier-1 company list for prestige scoring
     TIER_1_COMPANIES: set = {
         "google", "meta", "amazon", "apple", "microsoft", "netflix",
