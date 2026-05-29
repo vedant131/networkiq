@@ -166,6 +166,13 @@ export default function App() {
           {whatsappLinked && <WhatsAppBanner phone={linkedPhone} />}
         </div>
 
+        {/* ── Analytics ── */}
+        {showInsights && insights && (
+          <div style={{ marginBottom: 24 }} className="anim-in">
+            <InsightsDashboard insights={insights} />
+          </div>
+        )}
+
         {/* ── Search + filters ── */}
         <div className="glass-panel" style={{ marginBottom: 16, padding: '16px' }}>
           <QueryBar onQuery={handleQuery} onReset={resetFilters} label={queryLabel} />
@@ -186,13 +193,6 @@ export default function App() {
             recs={recommendations}
             onContact={setContactTarget} onMessage={(c) => { setMessageTarget(c) }}
           />
-        )}
-
-        {/* ── Analytics ── */}
-        {showInsights && insights && (
-          <div style={{ marginBottom: 24 }} className="anim-in">
-            <InsightsDashboard insights={insights} />
-          </div>
         )}
       </div>
 
