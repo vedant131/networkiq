@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import LandingPage from './components/LandingPage'
+import UploadZone from './components/UploadZone'
 import NetworkTable from './components/NetworkTable'
 import FilterPanel from './components/FilterPanel'
 import QueryBar from './components/QueryBar'
@@ -135,46 +136,20 @@ export default function App() {
 
   /* ─────────────── VIEWS ─────────────── */
   if (view === 'upload') return (
-    <div style={{ minHeight: '100vh', background: '#0a0f1e' }}>
-      {/* Dark-mode nav for landing page */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 90,
-        background: 'rgba(10,15,30,0.95)', backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-      }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <img src="/logo.svg" alt="NetWorkIQ" height="36" style={{ display:'block', filter:'drop-shadow(0 0 6px rgba(0,229,255,0.4))' }} />
-            <a
-              href="https://www.linkedin.com/in/vedant-shinde-hello/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontSize: 12, color: 'rgba(255,255,255,0.35)',
-                marginLeft: 6, textDecoration: 'none', transition: 'color 0.2s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = '#00e5ff'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
-            >by Vedant Shinde ↗</a>
-          </div>
-          <a
-            href="#upload-section"
-            style={{
-              background: 'linear-gradient(135deg, #0A66C2, #25D366)',
-              color: '#fff', borderRadius: 20, padding: '8px 20px',
-              fontSize: 13, fontWeight: 700, textDecoration: 'none',
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            Upload Data →
-          </a>
-        </div>
-      </header>
-      <LandingPage onUpload={handleUpload} />
+    <div style={{ background: '#000', minHeight: '100vh' }}>
+      <LandingPage onUpload={handleUpload} onShowUpload={() => setView('upload-form')} />
     </div>
   )
+
+  if (view === 'upload-form') return (
+    <div style={{ minHeight: '100vh', background: '#0a0f1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <img src="/logo.svg" alt="NetWorkIQ" style={{ height: 40, marginBottom: 32 }} />
+      <div style={{ width: '100%', maxWidth: 540 }}>
+        <UploadZone onUpload={handleUpload} dark />
+      </div>
+    </div>
+  )
+
 
   if (view === 'processing') return (
     <div style={{ minHeight: '100vh', background: 'var(--li-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
