@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import UploadZone from './components/UploadZone'
+import LandingPage from './components/LandingPage'
 import NetworkTable from './components/NetworkTable'
 import FilterPanel from './components/FilterPanel'
 import QueryBar from './components/QueryBar'
@@ -135,9 +135,38 @@ export default function App() {
 
   /* ─────────────── VIEWS ─────────────── */
   if (view === 'upload') return (
-    <div style={{ minHeight: '100vh', background: 'var(--li-bg)' }}>
-      <LiNav minimal />
-      <UploadZone onUpload={handleUpload} />
+    <div style={{ minHeight: '100vh', background: '#0a0f1e' }}>
+      {/* Dark-mode nav for landing page */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 90,
+        background: 'rgba(10,15,30,0.95)', backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
+      }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <svg width="32" height="32" viewBox="0 0 34 34" fill="none">
+              <rect width="34" height="34" rx="4" fill="#0A66C2"/>
+              <path d="M7 12h4.5v15H7V12zm2.25-7a2.25 2.25 0 110 4.5 2.25 2.25 0 010-4.5zM14 12h4.3v2.06h.06C19 12.82 20.67 12 22.5 12c4.5 0 5.5 3 5.5 6.9V27H23.5v-7.2c0-1.72-.03-3.93-2.4-3.93-2.4 0-2.77 1.87-2.77 3.8V27H14V12z" fill="white"/>
+            </svg>
+            <span style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>NetworkIQ</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginLeft: 4 }}>by T-Velo</span>
+          </div>
+          <a
+            href="#upload-section"
+            style={{
+              background: 'linear-gradient(135deg, #0A66C2, #25D366)',
+              color: '#fff', borderRadius: 20, padding: '8px 20px',
+              fontSize: 13, fontWeight: 700, textDecoration: 'none',
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            Upload Data →
+          </a>
+        </div>
+      </header>
+      <LandingPage onUpload={handleUpload} />
     </div>
   )
 
