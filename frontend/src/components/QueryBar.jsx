@@ -35,20 +35,20 @@ export default function QueryBar({ onQuery, onReset, label }) {
 
   return (
     <div style={{
-      padding: '12px 16px', borderBottom: '1px solid var(--li-border)',
-      display: 'flex', alignItems: 'center', gap: 10, background: 'var(--li-white)',
+      paddingBottom: 16, borderBottom: '1px solid var(--border-light)',
+      display: 'flex', alignItems: 'center', gap: 12,
     }}>
 
-      {/* LinkedIn-style search bar */}
+      {/* Command Palette style search bar */}
       <div ref={wrapRef} style={{ flex: 1, position: 'relative' }}>
         <div style={{
           display: 'flex', alignItems: 'center',
-          background: open ? 'var(--li-white)' : '#EEF3F8',
-          border: `1px solid ${open ? 'var(--li-blue)' : 'transparent'}`,
-          borderRadius: 4, transition: 'all 0.15s',
-          boxShadow: open ? '0 0 0 1px var(--li-blue)' : 'none',
+          background: open ? 'rgba(255,255,255,0.05)' : 'var(--bg-panel)',
+          border: `1px solid ${open ? 'rgba(255,255,255,0.2)' : 'var(--border-light)'}`,
+          borderRadius: 12, transition: 'all 0.2s',
+          boxShadow: open ? '0 0 15px rgba(255,255,255,0.05)' : 'none',
         }}>
-          <span style={{ padding: '0 10px', color: 'var(--li-text-2)', fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
+          <span style={{ padding: '0 12px 0 16px', color: 'var(--text-muted)', fontSize: 16, lineHeight: 1, flexShrink: 0 }}>
             {loading ? <span className="spinner" style={{ width: 14, height: 14 }} /> : '🔍'}
           </span>
           <input
@@ -56,46 +56,49 @@ export default function QueryBar({ onQuery, onReset, label }) {
             ref={inputRef}
             style={{
               flex: 1, border: 'none', outline: 'none', background: 'transparent',
-              color: 'var(--li-text)', fontSize: 14, padding: '9px 0',
-              fontFamily: 'inherit',
+              color: 'var(--text-main)', fontSize: 14, padding: '12px 0',
+              fontFamily: 'inherit', letterSpacing: '0.01em',
             }}
-            placeholder='Search connections — "Find recruiters at Google", "Show senior engineers"'
+            placeholder='Search network — "Find recruiters at Google"'
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') setOpen(false) }}
             onFocus={() => setOpen(true)}
           />
-          {query && (
+          {query ? (
             <button onClick={() => { setQuery(''); onReset() }}
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 10px', color: 'var(--li-text-2)', fontSize: 16 }}>
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 16px', color: 'var(--text-muted)', fontSize: 16 }}>
               ✕
             </button>
+          ) : (
+            <div style={{ padding: '0 16px', color: 'var(--text-faint)', fontSize: 12, fontFamily: 'monospace' }}>⌘K</div>
           )}
         </div>
 
-        {/* LinkedIn-style suggestions dropdown */}
+        {/* Dark theme suggestions dropdown */}
         {open && !query && (
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 100,
-            background: 'var(--li-white)', borderRadius: 4,
-            boxShadow: '0 0 0 1px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.15)',
-            overflow: 'hidden',
+          <div className="anim-in" style={{
+            position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 100,
+            background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(16px)',
+            border: '1px solid var(--border-light)', borderRadius: 12,
+            boxShadow: '0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
+            overflow: 'hidden', padding: 8,
           }}>
-            <div style={{ padding: '8px 12px 4px', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', color: 'var(--li-text-3)', textTransform: 'uppercase' }}>
+            <div style={{ padding: '8px 12px', fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-faint)', textTransform: 'uppercase' }}>
               Suggested searches
             </div>
             {SUGGESTIONS.map(s => (
               <div key={s} onMouseDown={() => { setQuery(s); submit(s) }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 12px', cursor: 'pointer',
-                  transition: 'background 0.1s', fontSize: 14,
-                  color: 'var(--li-text)',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 12px', cursor: 'pointer',
+                  transition: 'all 0.15s', fontSize: 13,
+                  color: 'var(--text-main)', borderRadius: 8,
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#F3F2EF'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#fff' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-main)' }}
               >
-                <span style={{ color: 'var(--li-text-2)', fontSize: 14 }}>🔍</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>✨</span>
                 {s}
               </div>
             ))}
@@ -103,14 +106,14 @@ export default function QueryBar({ onQuery, onReset, label }) {
         )}
       </div>
 
-      <button id="query-submit-btn" className="btn btn-primary"
+      <button id="query-submit-btn" className="btn btn-primary liquid-glass"
         onClick={() => submit()} disabled={loading}
-        style={{ padding: '8px 20px', flexShrink: 0, fontSize: 14 }}>
+        style={{ padding: '12px 24px', flexShrink: 0, fontSize: 14, borderRadius: 12 }}>
         Search
       </button>
 
       {label && (
-        <span style={{ fontSize: 12, color: 'var(--li-text-2)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        <span style={{ fontSize: 12, color: 'var(--accent-emerald)', whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 500, background: 'rgba(52,211,153,0.1)', padding: '4px 10px', borderRadius: 20 }}>
           {label}
         </span>
       )}

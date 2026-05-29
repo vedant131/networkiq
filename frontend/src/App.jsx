@@ -22,37 +22,29 @@ function connAgeDays(dateStr) {
 function getRecommendations(connections) {
   const recs = []
 
-  // New connections (< 30 days) — warm them up
   connections
     .filter(c => { const d = connAgeDays(c.connected_on); return d !== null && d <= 30 && c.score > 0.5 })
     .slice(0, 2)
-    .forEach(c => recs.push({ ...c, _reason: '🆕 New connection — great time to say hello!', _action: 'hello' }))
+    .forEach(c => recs.push({ ...c, _reason: 'New connection — say hello!', _action: 'hello' }))
 
-  // Reconnect: high-score + 2+ years silent
   connections
     .filter(c => { const d = connAgeDays(c.connected_on); return d !== null && d >= 730 && c.score > 0.7 })
     .slice(0, 2)
-    .forEach(c => recs.push({ ...c, _reason: '💤 Haven\'t talked in 2+ years — reconnect!', _action: 'networking' }))
+    .forEach(c => recs.push({ ...c, _reason: 'Silent for 2+ years — reconnect', _action: 'networking' }))
 
-  // Recruiters
   connections
     .filter(c => c.category === 'Recruiter/HR' && c.score > 0.5)
     .slice(0, 2)
-    .forEach(c => recs.push({ ...c, _reason: '🎯 Recruiter — great for job leads & referrals', _action: 'job' }))
+    .forEach(c => recs.push({ ...c, _reason: 'Recruiter — great for job leads', _action: 'job' }))
 
-  // Founders with high score
   connections
     .filter(c => c.category === 'Founder/Entrepreneur' && c.score > 0.75)
     .slice(0, 1)
-    .forEach(c => recs.push({ ...c, _reason: '🚀 Founder — explore collaboration', _action: 'collaboration' }))
+    .forEach(c => recs.push({ ...c, _reason: 'Founder — explore collaboration', _action: 'collaboration' }))
 
-  // Dedup by id, limit to 5
   const seen = new Set()
   return recs.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true }).slice(0, 5)
 }
-
-const AVATAR_COLORS = ['#0A66C2','#057642','#915907','#B24020','#520091','#0073B1','#7B5E00']
-function avatarColor(name) { return AVATAR_COLORS[(name?.charCodeAt(0) ?? 65) % AVATAR_COLORS.length] }
 
 export default function App() {
   const [view, setView]               = useState('upload')
@@ -121,7 +113,6 @@ export default function App() {
     setActiveFilters({})
   }
 
-  // "Find Similar" — filter by same category + seniority
   const handleFindSimilar = useCallback((conn) => {
     const r = connections.filter(c =>
       c.id !== conn.id && c.category === conn.category && c.seniority === conn.seniority
@@ -131,263 +122,244 @@ export default function App() {
   }, [connections])
 
   const openMessage = (conn) => { setContactTarget(null); setMessageTarget(conn) }
-
   const recommendations = useMemo(() => getRecommendations(connections), [connections])
 
   /* ─────────────── VIEWS ─────────────── */
   if (view === 'upload') return (
-    <div style={{ background: '#000', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--bg-dark)', minHeight: '100vh' }}>
       <LandingPage onUpload={handleUpload} onShowUpload={() => setView('upload-form')} />
     </div>
   )
 
   if (view === 'upload-form') return (
-    <div style={{ minHeight: '100vh', background: '#0a0f1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <img src="/logo.svg" alt="NetWorkIQ" style={{ height: 40, marginBottom: 32 }} />
+    <div className="bg-noise" style={{ minHeight: '100vh', background: '#050505', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <img src={import.meta.env.BASE_URL + 'logo.svg'} alt="NetWorkIQ" style={{ height: 44, marginBottom: 40, filter: 'brightness(1.2) drop-shadow(0 0 8px rgba(0,229,255,0.3))' }} />
       <div style={{ width: '100%', maxWidth: 540 }}>
         <UploadZone onUpload={handleUpload} dark />
       </div>
     </div>
   )
 
-
   if (view === 'processing') return (
-    <div style={{ minHeight: '100vh', background: 'var(--li-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <LiNav minimal />
+    <div className="bg-noise" style={{ minHeight: '100vh', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <ProcessingView status={processingMsg} />
     </div>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--li-bg)', display: 'flex', flexDirection: 'column' }}>
-      <LiNav total={connections.length} onReset={() => setView('upload')}
+    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', display: 'flex', flexDirection: 'column' }}>
+      <CommandNav total={connections.length} onReset={() => setView('upload')}
         onInsights={() => setShowInsights(v => !v)} showInsights={showInsights} />
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 16px 80px', width: '100%', flex: 1 }}>
+      <div style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 16px 80px', width: '100%', flex: 1 }}>
 
-        {/* ── Stat strip ── */}
-        {insights && <StatStrip insights={insights} connections={connections} />}
+        {/* ── Overview Panel ── */}
+        {insights && <IntelligenceOverview insights={insights} connections={connections} />}
 
-        {/* ── ZIP success banner ── */}
-        {fileType === 'zip' && foundFiles && <ZipBanner foundFiles={foundFiles} />}
-
-        {/* ── WhatsApp linked banner ── */}
-        {whatsappLinked && <WhatsAppBanner phone={linkedPhone} />}
+        {/* ── Banners ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+          {fileType === 'zip' && foundFiles && <ZipBanner foundFiles={foundFiles} />}
+          {whatsappLinked && <WhatsAppBanner phone={linkedPhone} />}
+        </div>
 
         {/* ── Smart Recommendations ── */}
         {recommendations.length > 0 && (
           <SmartRecommendations
-            recs={recommendations}
-            open={showRecs}
-            onToggle={() => setShowRecs(v => !v)}
-            onContact={setContactTarget}
-            onMessage={(c) => { setMessageTarget(c) }}
+            recs={recommendations} open={showRecs} onToggle={() => setShowRecs(v => !v)}
+            onContact={setContactTarget} onMessage={(c) => { setMessageTarget(c) }}
           />
         )}
 
         {/* ── Analytics ── */}
         {showInsights && insights && (
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 24 }} className="anim-in">
             <InsightsDashboard insights={insights} />
           </div>
         )}
 
         {/* ── Search + filters ── */}
-        <div className="li-card" style={{ marginBottom: 12 }}>
+        <div className="glass-panel" style={{ marginBottom: 16, padding: '16px' }}>
           <QueryBar onQuery={handleQuery} onReset={resetFilters} label={queryLabel} />
           <FilterPanel connections={connections} onChange={handleFilterChange} />
         </div>
 
-        {/* ── Results ── */}
-        <div className="li-card">
+        {/* ── Results List ── */}
+        <div className="glass-panel" style={{ overflow: 'hidden' }}>
           <NetworkTable connections={filtered} onContact={setContactTarget} />
         </div>
       </div>
 
       {contactTarget && (
         <ContactDrawer
-          connection={contactTarget}
-          sessionId={sessionId}
-          allConnections={connections}
-          onClose={() => setContactTarget(null)}
-          onMessage={openMessage}
-          onFindSimilar={handleFindSimilar}
+          connection={contactTarget} sessionId={sessionId} allConnections={connections}
+          onClose={() => setContactTarget(null)} onMessage={openMessage} onFindSimilar={handleFindSimilar}
         />
       )}
       {messageTarget && (
-        <MessageModal connection={messageTarget} sessionId={sessionId}
-          onClose={() => setMessageTarget(null)} />
+        <MessageModal connection={messageTarget} sessionId={sessionId} onClose={() => setMessageTarget(null)} />
       )}
       <ExportButton sessionId={sessionId} />
     </div>
   )
 }
 
-/* ── LinkedIn Nav ───────────────────────────────────────────── */
-function LiNav({ minimal, total, onReset, onInsights, showInsights }) {
+/* ── Command Nav (Glassmorphic Top Bar) ───────────────────────── */
+function CommandNav({ total, onReset, onInsights, showInsights }) {
   return (
     <header style={{
-      position: 'sticky', top: 0, zIndex: 90,
-      background: 'var(--li-white)', borderBottom: '1px solid rgba(0,0,0,0.08)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      position: 'sticky', top: 16, zIndex: 90,
+      maxWidth: 1200, margin: '0 auto', width: 'calc(100% - 32px)',
+      background: 'rgba(10,10,10,0.65)', border: '1px solid rgba(255,255,255,0.08)',
+      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+      borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
     }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/logo.svg" alt="NetWorkIQ" height="30" style={{ display:'block' }} />
-          {!minimal && total != null && (
-            <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', marginLeft: 4 }}>{total} connections</span>
+      <div style={{ padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src={import.meta.env.BASE_URL + 'logo.svg'} alt="NetWorkIQ" height="28" style={{ display:'block', filter: 'brightness(1.2)' }} />
+          {total != null && (
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 20 }}>
+              {total} connections
+            </span>
           )}
         </div>
-        {!minimal && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 13 }} onClick={onInsights}>
-              {showInsights ? '▲ Hide' : '📊'} Analytics
-            </button>
-            <button className="btn btn-outline" style={{ padding: '6px 16px', fontSize: 13 }} onClick={onReset}>
-              ↩ New Upload
-            </button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={onInsights}>
+            {showInsights ? 'Close Analytics' : 'Analytics'}
+          </button>
+          <button className="btn btn-primary liquid-glass" onClick={onReset}>
+            New Upload
+          </button>
+        </div>
       </div>
     </header>
   )
 }
 
-/* ── ZIP Banner ─────────────────────────────────────────────── */
-function ZipBanner({ foundFiles }) {
-  const parts = []
-  if (foundFiles.connections) parts.push('📋 Connections')
-  if (foundFiles.emails)      parts.push('📧 Emails')
-  if (foundFiles.phones)      parts.push('📱 Phones')
+/* ── Intelligence Overview (Replaces StatStrip) ───────────────── */
+function IntelligenceOverview({ insights, connections }) {
+  const withEmail = connections.filter(c => c.email && c.email !== '' && c.email !== 'nan').length
+  const emailPct  = connections.length > 0 ? Math.round((withEmail / connections.length) * 100) : 0
+
+  const stats = [
+    { label: 'Total Network',  value: insights.total,                  color: '#fff' },
+    { label: 'Tech Talent',    value: insights.tech_count,             color: 'var(--accent-blue)' },
+    { label: 'High Potential', value: insights.hiring_potential_count, color: 'var(--accent-emerald)' },
+    { label: 'Email Coverage', value: `${emailPct}%`,                  color: 'var(--accent-amber)', sub: `${withEmail} contacts` },
+  ]
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-      padding: '7px 14px', borderRadius: 6, marginBottom: 12,
-      background: 'rgba(5,118,66,0.06)', border: '1px solid rgba(5,118,66,0.2)',
-      fontSize: 12, color: 'rgba(0,0,0,0.6)',
-    }}>
-      <span style={{ color: '#057642', fontWeight: 700 }}>✓ LinkedIn ZIP loaded</span>
-      <span style={{ color: 'rgba(0,0,0,0.2)' }}>·</span>
-      <span>{parts.join(' · ')}</span>
-      {foundFiles.emails_enriched && <Pill text="Email enriched" />}
-      {foundFiles.phones_enriched && <Pill text="Phone enriched" />}
+    <div className="glass-panel" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 24, padding: '32px 24px', background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 100%)' }}>
+      {stats.map(s => (
+        <div key={s.label} className="anim-in" style={{ borderRight: '1px solid rgba(255,255,255,0.05)', padding: '0 20px' }}>
+          <div className="font-display" style={{ color: s.color, fontSize: 48, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 8, textShadow: `0 0 20px ${s.color}44` }}>
+            {s.value}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+            {s.label}
+          </div>
+          {s.sub && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>{s.sub}</div>}
+        </div>
+      ))}
     </div>
   )
 }
-function Pill({ text }) {
-  return <span style={{ background: 'rgba(5,118,66,0.1)', color: '#057642', borderRadius: 99, padding: '1px 8px', fontWeight: 600, fontSize: 11 }}>{text}</span>
+
+/* ── Banners (Cinematic) ────────────────────────────────────── */
+function ZipBanner({ foundFiles }) {
+  const parts = []
+  if (foundFiles.connections) parts.push('Connections')
+  if (foundFiles.emails)      parts.push('Emails')
+  if (foundFiles.phones)      parts.push('Phones')
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+      padding: '12px 20px', borderRadius: 12,
+      background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)',
+      fontSize: 13, color: 'var(--text-muted)',
+    }}>
+      <span style={{ color: 'var(--accent-emerald)', fontWeight: 600 }}>✓ LinkedIn Data Loaded</span>
+      <span style={{ color: 'rgba(255,255,255,0.1)' }}>|</span>
+      <span>{parts.join(' · ')}</span>
+      {foundFiles.emails_enriched && <span className="badge badge-hr">Emails Enriched</span>}
+      {foundFiles.phones_enriched && <span className="badge badge-hr">Phones Enriched</span>}
+    </div>
+  )
 }
 
-/* ── WhatsApp Linked Banner ──────────────────────────────────── */
 function WhatsAppBanner({ phone }) {
   const [dismissed, setDismissed] = useState(false)
   if (dismissed) return null
   return (
     <div style={{
-      display: 'flex', alignItems: 'flex-start', gap: 12,
-      padding: '12px 16px', borderRadius: 8, marginBottom: 12,
-      background: 'linear-gradient(135deg, rgba(37,211,102,0.1) 0%, rgba(18,140,126,0.08) 100%)',
-      border: '1.5px solid rgba(37,211,102,0.4)',
+      display: 'flex', alignItems: 'flex-start', gap: 16,
+      padding: '16px 20px', borderRadius: 12,
+      background: 'rgba(37,211,102,0.05)', border: '1px solid rgba(37,211,102,0.2)',
     }}>
-      <span style={{ fontSize: 28, flexShrink: 0 }}>💬</span>
+      <span style={{ fontSize: 24, flexShrink: 0, textShadow: '0 0 20px rgba(37,211,102,0.5)' }}>💬</span>
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: '#128C7E', marginBottom: 4 }}>
-          ✅ WhatsApp Bot Connected! — {phone}
+        <div style={{ fontWeight: 600, fontSize: 14, color: '#34d399', marginBottom: 4 }}>
+          WhatsApp Bot Connected: <span style={{ color: '#fff' }}>{phone}</span>
         </div>
-        <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.65)', marginBottom: 8 }}>
-          Your connections are saved. Text the bot anytime — even after closing this page.
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+          Your network is now searchable directly from WhatsApp.
         </div>
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 6,
-        }}>
-          {[
-            'who works at Google?',
-            'find recruiters',
-            'show senior engineers',
-            'stats',
-          ].map(q => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {['who works at Google?', 'find recruiters', 'show senior engineers', 'stats'].map(q => (
             <span key={q} style={{
-              background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)',
-              borderRadius: 20, padding: '3px 10px', fontSize: 12,
-              color: '#128C7E', fontStyle: 'italic',
+              background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)',
+              borderRadius: 20, padding: '4px 12px', fontSize: 12,
+              color: '#34d399', fontStyle: 'italic',
             }}>"{q}"</span>
           ))}
         </div>
-        <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(0,0,0,0.45)' }}>
-          💡 Text the Twilio WhatsApp sandbox number to try it now →
-          <strong style={{ marginLeft: 4 }}>+1 415 523 8886</strong>
-        </div>
       </div>
-      <button onClick={() => setDismissed(true)} style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        color: 'rgba(0,0,0,0.3)', fontSize: 16, flexShrink: 0,
-        padding: 4,
-      }}>✕</button>
+      <button onClick={() => setDismissed(true)} className="btn-ghost" style={{ padding: 4, color: 'var(--text-faint)' }}>✕</button>
     </div>
   )
 }
 
-
-/* ── Smart Recommendations ──────────────────────────────────── */
+/* ── Smart Recommendations (Cinematic) ──────────────────────── */
 function SmartRecommendations({ recs, open, onToggle, onContact, onMessage }) {
   return (
-    <div className="li-card" style={{ marginBottom: 12, overflow: 'hidden' }}>
+    <div className="glass-panel" style={{ marginBottom: 24, overflow: 'hidden' }}>
       <button onClick={onToggle} style={{
         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer',
-        borderBottom: open ? '1px solid rgba(0,0,0,0.07)' : 'none',
+        padding: '16px 20px', background: open ? 'rgba(255,255,255,0.02)' : 'transparent', border: 'none', cursor: 'pointer',
+        borderBottom: open ? '1px solid var(--border-light)' : 'none', transition: 'background 0.2s',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 16 }}>⚡</span>
-          <span style={{ fontWeight: 700, fontSize: 14, color: 'rgba(0,0,0,0.85)' }}>
-            Smart Outreach — {recs.length} people to reach out to
+          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-main)', letterSpacing: '0.02em' }}>
+            Smart Outreach <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>— {recs.length} recommended actions</span>
           </span>
         </div>
-        <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.4)' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
-        <div style={{ padding: '8px 12px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {recs.map((r, i) => (
-            <div key={r.id ?? i} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px',
-              borderRadius: 6, cursor: 'pointer', transition: 'background 0.1s',
-              border: '1px solid rgba(0,0,0,0.06)',
+            <div key={r.id ?? i} className="anim-fade" style={{
+              display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px',
+              borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
+              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
             }}
             onClick={() => onContact(r)}
-            onMouseEnter={e => e.currentTarget.style.background = '#F3F2EF'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)' }}
             >
-              {/* Avatar */}
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                background: avatarColor(r.full_name),
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontWeight: 700, fontSize: 14,
-              }}>
+              <div className="avatar" style={{ width: 40, height: 40, fontSize: 16 }}>
                 {r.full_name?.[0]?.toUpperCase()}
               </div>
-
-              {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--li-blue)' }}>{r.full_name}</div>
-                <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.job_title_clean || r.job_title_raw} · {r.company}
+                <div style={{ fontWeight: 600, fontSize: 14, color: '#fff' }}>{r.full_name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {r.job_title_clean || r.job_title_raw} · <span style={{ color: 'var(--text-faint)' }}>{r.company}</span>
                 </div>
               </div>
-
-              {/* Reason */}
-              <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.5)', maxWidth: 200, textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 12, color: 'var(--accent-amber)', opacity: 0.8, textAlign: 'right', flexShrink: 0 }}>
                 {r._reason}
               </div>
-
-              {/* Message button */}
-              <button onClick={e => { e.stopPropagation(); onMessage(r) }}
-                style={{
-                  border: '1.5px solid var(--li-blue)', background: 'white', color: 'var(--li-blue)',
-                  borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit',
-                }}>
+              <button className="btn btn-outline" onClick={e => { e.stopPropagation(); onMessage(r) }} style={{ padding: '6px 14px', fontSize: 12 }}>
                 Message
               </button>
             </div>
@@ -398,41 +370,15 @@ function SmartRecommendations({ recs, open, onToggle, onContact, onMessage }) {
   )
 }
 
-/* ── Stat Strip ─────────────────────────────────────────────── */
-function StatStrip({ insights, connections }) {
-  // Email coverage
-  const withEmail = connections.filter(c => c.email && c.email !== '' && c.email !== 'nan').length
-  const emailPct  = connections.length > 0 ? Math.round((withEmail / connections.length) * 100) : 0
-
-  const stats = [
-    { label: 'Total Connections',  value: insights.total,                  cls: 'stat-card-blue',  color: 'var(--li-blue)' },
-    { label: 'Tech Professionals', value: insights.tech_count,             cls: 'stat-card-teal',  color: 'var(--li-teal)' },
-    { label: 'Hiring Potential',   value: insights.hiring_potential_count, cls: 'stat-card-green', color: 'var(--li-green)' },
-    { label: 'Emails Available',   value: `${emailPct}%`,                  cls: 'stat-card-gold',  color: 'var(--li-gold)',
-      sub: `${withEmail} of ${connections.length}` },
-  ]
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 12 }}>
-      {stats.map(s => (
-        <div key={s.label} className={`stat-card ${s.cls} anim-in`}>
-          <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
-          <div className="stat-label">{s.label}</div>
-          {s.sub && <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', marginTop: 2 }}>{s.sub}</div>}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/* ── Processing ─────────────────────────────────────────────── */
+/* ── Processing (Cinematic) ─────────────────────────────────── */
 function ProcessingView({ status }) {
   return (
-    <div style={{ textAlign: 'center', maxWidth: 380, margin: '60px auto 0' }} className="anim-in">
-      <div style={{ width: 64, height: 64, margin: '0 auto 20px', background: 'var(--li-blue)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🧠</div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, color: 'rgba(0,0,0,0.85)' }}>Analysing your network…</h2>
-      <p style={{ color: 'rgba(0,0,0,0.5)', fontSize: 14, marginBottom: 24 }}>{status}</p>
+    <div style={{ textAlign: 'center', maxWidth: 400, margin: '0 auto' }} className="anim-in">
+      <div className="liquid-glass" style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(255,255,255,0.1)' }}>🧠</div>
+      <h2 className="font-display" style={{ fontSize: 36, marginBottom: 12, color: '#fff', letterSpacing: '-0.02em' }}>Analysing Network</h2>
+      <p style={{ color: 'var(--text-muted)', fontSize: 15, marginBottom: 32 }}>{status}</p>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <div className="spinner" style={{ width: 28, height: 28, borderWidth: 3 }} />
+        <div className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
       </div>
     </div>
   )

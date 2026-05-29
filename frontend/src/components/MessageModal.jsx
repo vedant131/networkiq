@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiUrl } from '../api'
 
 const PURPOSES = [
   { id: 'networking',     emoji: '🤝', label: 'General Networking' },
@@ -16,10 +17,11 @@ export default function MessageModal({ connection, sessionId, onClose }) {
   const generate = async () => {
     setLoading(true); setMessage('')
     try {
-      const res = await fetch('/api/message', {
+      const res = await fetch(apiUrl('/api/message'), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, connection_id: connection.id, purpose }),
       })
+      if (!res.ok) throw new Error('API failed')
       const data = await res.json()
       setMessage(data.message)
     } catch { setMessage('Failed to generate. Please try again.') }
@@ -34,90 +36,88 @@ export default function MessageModal({ connection, sessionId, onClose }) {
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
-        {/* LinkedIn-style modal header */}
+        {/* Header */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: 16, paddingBottom: 14, borderBottom: '1px solid var(--li-border)',
+          marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)',
         }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--li-text)' }}>New Message</h2>
-          <button onClick={onClose} style={{
-            background: 'none', border: 'none', fontSize: 22, cursor: 'pointer',
-            color: 'var(--li-text-2)', lineHeight: 1, padding: 4,
-          }}>✕</button>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}>Draft Message</h2>
+          <button onClick={onClose} className="btn-ghost" style={{ fontSize: 20, padding: '2px 8px' }}>✕</button>
         </div>
 
         {/* To: field */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--li-text-2)', marginBottom: 4 }}>TO</div>
+        <div style={{ marginBottom: 20 }}>
+          <div className="eyebrow" style={{ marginBottom: 8 }}>RECIPIENT</div>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
-            borderBottom: '1px solid var(--li-border)',
+            display: 'flex', alignItems: 'center', gap: 12, padding: '12px',
+            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12,
           }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              background: 'var(--li-blue)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontWeight: 700, fontSize: 15,
-            }}>
-              {connection.full_name?.[0]}
+            <div className="avatar" style={{ width: 40, height: 40, fontSize: 16 }}>
+              {connection.full_name?.[0]?.toUpperCase() ?? '?'}
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--li-text)' }}>{connection.full_name}</div>
-              <div style={{ fontSize: 12, color: 'var(--li-text-2)' }}>
-                {connection.job_title_clean} · {connection.company}
+              <div style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{connection.full_name}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                {connection.job_title_clean} <span style={{ opacity: 0.5 }}>·</span> {connection.company}
               </div>
             </div>
           </div>
         </div>
 
         {/* Purpose */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--li-text-2)', marginBottom: 8 }}>MESSAGE PURPOSE</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {PURPOSES.map(p => (
-              <button key={p.id} id={`purpose-${p.id}`} onClick={() => setPurpose(p.id)}
-                style={{
-                  padding: '9px 12px', borderRadius: 4,
-                  border: `1.5px solid ${purpose === p.id ? 'var(--li-blue)' : 'rgba(0,0,0,0.2)'}`,
-                  background: purpose === p.id ? 'var(--li-blue-tint)' : 'var(--li-white)',
-                  color: purpose === p.id ? 'var(--li-blue)' : 'var(--li-text-2)',
-                  cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: 13,
-                  textAlign: 'left', transition: 'all 0.13s',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                }}>
-                {p.emoji} {p.label}
-              </button>
-            ))}
+        <div style={{ marginBottom: 24 }}>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>STRATEGY</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {PURPOSES.map(p => {
+              const active = purpose === p.id
+              return (
+                <button key={p.id} id={`purpose-${p.id}`} onClick={() => setPurpose(p.id)}
+                  style={{
+                    padding: '12px', borderRadius: 12,
+                    border: `1px solid ${active ? 'rgba(79,163,255,0.4)' : 'rgba(255,255,255,0.05)'}`,
+                    background: active ? 'rgba(79,163,255,0.1)' : 'rgba(255,255,255,0.02)',
+                    color: active ? 'var(--accent-blue)' : 'var(--text-muted)',
+                    cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: 13,
+                    textAlign: 'left', transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
+                >
+                  <span style={{ fontSize: 16 }}>{p.emoji}</span> {p.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        <button id="generate-message-btn" className="btn btn-primary w-full"
+        <button id="generate-message-btn" className="btn btn-primary liquid-glass w-full"
           onClick={generate} disabled={loading}
-          style={{ justifyContent: 'center', marginBottom: 16, borderRadius: 4 }}>
-          {loading ? <><span className="spinner" /> Generating…</> : '✨ Generate Message'}
+          style={{ justifyContent: 'center', marginBottom: 20, padding: '14px', fontSize: 15, borderRadius: 12 }}>
+          {loading ? <><span className="spinner" /> Generating Draft…</> : '✨ Generate Message'}
         </button>
 
         {message && (
-          <div className="anim-fade">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--li-text-2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Message</span>
-              <button onClick={copy} className="btn btn-outline"
-                style={{ padding: '4px 12px', fontSize: 12, borderRadius: 4 }}>
-                {copied ? '✓ Copied!' : '📋 Copy'}
+          <div className="anim-fade" style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <span className="eyebrow">Generated Draft</span>
+              <button onClick={copy} className="btn btn-outline" style={{ padding: '6px 14px', fontSize: 12, borderRadius: 20 }}>
+                {copied ? '✓ Copied!' : '📋 Copy Text'}
               </button>
             </div>
             <textarea value={message} onChange={e => setMessage(e.target.value)}
               style={{
-                width: '100%', minHeight: 130, padding: 12, borderRadius: 4,
-                border: '1px solid rgba(0,0,0,0.2)', color: 'var(--li-text)',
+                width: '100%', minHeight: 140, padding: 16, borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-main)',
                 fontSize: 14, lineHeight: 1.6, resize: 'vertical', outline: 'none',
-                fontFamily: 'inherit', background: 'var(--li-white)',
+                fontFamily: 'inherit', background: 'rgba(255,255,255,0.02)',
+                transition: 'all 0.2s',
               }}
-              onFocus={e => e.target.style.borderColor = 'var(--li-blue)'}
-              onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.2)'}
+              onFocus={e => { e.target.style.borderColor = 'rgba(79,163,255,0.4)'; e.target.style.background = 'rgba(255,255,255,0.04)' }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.02)' }}
             />
-            <div style={{ fontSize: 11, color: 'var(--li-text-3)', marginTop: 4 }}>
-              {message.split(' ').filter(Boolean).length} words · edit before sending
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 8, textAlign: 'right' }}>
+              {message.split(' ').filter(Boolean).length} words · ready to edit
             </div>
           </div>
         )}

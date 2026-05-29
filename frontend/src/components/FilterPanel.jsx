@@ -19,7 +19,7 @@ function CompanyDropdown({ companies, selected, onToggle, onClear }) {
   const handleOpen = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
-      setDropPos({ top: r.bottom + 4, left: r.left })
+      setDropPos({ top: r.bottom + 8, left: r.left })
     }
     setOpen(v => !v)
   }
@@ -29,69 +29,69 @@ function CompanyDropdown({ companies, selected, onToggle, onClear }) {
       <button ref={btnRef} className={`filter-chip ${active ? 'active' : ''}`} onClick={handleOpen}>
         Company
         {active && (
-          <span style={{ background: 'var(--li-blue)', color: '#fff', borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '1px 6px' }}>
+          <span style={{ background: 'var(--accent-emerald)', color: '#000', borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '1px 6px' }}>
             {selected.length}
           </span>
         )}
-        <span style={{ fontSize: 10, opacity: 0.55, marginLeft: 2 }}>▾</span>
+        <span style={{ fontSize: 10, opacity: 0.55, marginLeft: 2 }}>▼</span>
       </button>
 
       {open && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => { setOpen(false); setSearch('') }} />
-          <div style={{
+          <div className="anim-in" style={{
             position: 'fixed', top: dropPos.top, left: dropPos.left,
-            zIndex: 1000, background: '#fff', borderRadius: 6,
-            width: 280, boxShadow: '0 0 0 1px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.16)',
-            animation: 'dropIn 0.14s ease', display: 'flex', flexDirection: 'column',
-            maxHeight: 380,
+            zIndex: 1000, background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(16px)',
+            borderRadius: 12, border: '1px solid var(--border-light)',
+            width: 280, boxShadow: '0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
+            display: 'flex', flexDirection: 'column', maxHeight: 380,
           }}>
             {/* Search box */}
-            <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+            <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <input
                 autoFocus
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search companies…"
                 style={{
-                  width: '100%', border: '1px solid rgba(0,0,0,0.15)', borderRadius: 4,
-                  padding: '5px 8px', fontSize: 13, outline: 'none',
-                  fontFamily: 'inherit',
+                  width: '100%', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+                  padding: '8px 12px', fontSize: 13, outline: 'none', background: 'rgba(255,255,255,0.02)',
+                  fontFamily: 'inherit', color: 'var(--text-main)', transition: 'all 0.2s',
                 }}
-                onFocus={e => e.target.style.borderColor = 'var(--li-blue)'}
-                onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.15)'}
+                onFocus={e => { e.target.style.borderColor = 'rgba(255,255,255,0.3)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.02)' }}
               />
             </div>
 
             {/* Company list */}
-            <div style={{ overflowY: 'auto', flex: 1 }}>
+            <div style={{ overflowY: 'auto', flex: 1, padding: '4px 8px' }}>
               {visible.length === 0 && (
-                <div style={{ padding: '12px 14px', fontSize: 13, color: 'rgba(0,0,0,0.4)' }}>No companies match</div>
+                <div style={{ padding: '12px 14px', fontSize: 13, color: 'var(--text-faint)' }}>No companies match</div>
               )}
               {visible.map(([name, count]) => (
                 <label key={name} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '7px 14px', cursor: 'pointer',
+                  padding: '8px 12px', cursor: 'pointer', borderRadius: 6, transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#F3F2EF'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <input type="checkbox" checked={selected.includes(name)} onChange={() => onToggle(name)}
-                    style={{ accentColor: 'var(--li-blue)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
+                    style={{ accentColor: 'var(--accent-emerald)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
                   <span style={{
                     flex: 1, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    color: selected.includes(name) ? 'var(--li-blue)' : 'rgba(0,0,0,0.85)',
+                    color: selected.includes(name) ? 'var(--text-main)' : 'var(--text-muted)',
                     fontWeight: selected.includes(name) ? 600 : 400,
                   }}>{name}</span>
-                  <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', flexShrink: 0 }}>{count}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-faint)', flexShrink: 0 }}>{count}</span>
                 </label>
               ))}
             </div>
 
             {selected.length > 0 && (
-              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', padding: '6px 14px' }}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '10px 12px' }}>
                 <button onClick={() => { onClear(); setOpen(false); setSearch('') }}
-                  style={{ fontSize: 13, color: 'var(--li-blue)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                  style={{ fontSize: 13, color: 'var(--accent-emerald)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                   Clear ({selected.length})
                 </button>
               </div>
@@ -113,7 +113,7 @@ function MultiDropdown({ label, options, selected, onToggle, onClear, showCounts
   const handleOpen = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
-      setDropPos({ top: r.bottom + 4, left: r.left })
+      setDropPos({ top: r.bottom + 8, left: r.left })
     }
     setOpen(v => !v)
   }
@@ -123,23 +123,23 @@ function MultiDropdown({ label, options, selected, onToggle, onClear, showCounts
       <button ref={btnRef} className={`filter-chip ${active ? 'active' : ''}`} onClick={handleOpen}>
         {label}
         {active && (
-          <span style={{ background: 'var(--li-blue)', color: '#fff', borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '1px 6px' }}>
+          <span style={{ background: 'var(--accent-emerald)', color: '#000', borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '1px 6px' }}>
             {selected.length}
           </span>
         )}
-        <span style={{ fontSize: 10, opacity: 0.55, marginLeft: 2 }}>▾</span>
+        <span style={{ fontSize: 10, opacity: 0.55, marginLeft: 2 }}>▼</span>
       </button>
 
       {open && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setOpen(false)} />
-          <div style={{
+          <div className="anim-in" style={{
             position: 'fixed', top: dropPos.top, left: dropPos.left,
-            zIndex: 1000, background: '#fff', borderRadius: 6,
+            zIndex: 1000, background: 'rgba(15,15,15,0.95)', backdropFilter: 'blur(16px)',
+            borderRadius: 12, border: '1px solid var(--border-light)',
             minWidth: 240, maxHeight: 340, overflowY: 'auto',
-            boxShadow: '0 0 0 1px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.16)',
-            paddingTop: 6, paddingBottom: 6,
-            animation: 'dropIn 0.14s ease',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
+            padding: '8px',
           }}>
             {options.map(opt => {
               const name    = Array.isArray(opt) ? opt[0] : opt
@@ -148,28 +148,28 @@ function MultiDropdown({ label, options, selected, onToggle, onClear, showCounts
               return (
                 <label key={name} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '8px 14px', cursor: 'pointer',
+                  padding: '8px 12px', cursor: 'pointer', borderRadius: 6, transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#F3F2EF'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <input type="checkbox" checked={checked} onChange={() => onToggle(name)}
-                    style={{ accentColor: 'var(--li-blue)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
+                    style={{ accentColor: 'var(--accent-emerald)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
                   <span style={{
-                    flex: 1, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    color: checked ? 'var(--li-blue)' : 'rgba(0,0,0,0.85)',
+                    flex: 1, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    color: checked ? 'var(--text-main)' : 'var(--text-muted)',
                     fontWeight: checked ? 600 : 400,
                   }}>{name}</span>
                   {count != null && (
-                    <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', flexShrink: 0 }}>{count}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-faint)', flexShrink: 0 }}>{count}</span>
                   )}
                 </label>
               )
             })}
             {selected.length > 0 && (
-              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', padding: '6px 14px 2px' }}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '10px 12px 2px', marginTop: 8 }}>
                 <button onClick={() => { onClear(); setOpen(false) }}
-                  style={{ fontSize: 13, color: 'var(--li-blue)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                  style={{ fontSize: 13, color: 'var(--accent-emerald)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                   Clear ({selected.length})
                 </button>
               </div>
@@ -201,7 +201,6 @@ export default function FilterPanel({ connections, onChange }) {
     const counts = {}
     connections.forEach(c => { if (c.seniority) counts[c.seniority] = (counts[c.seniority] || 0) + 1 })
     const ordered = SENIORITY_ORDER.filter(s => counts[s]).map(s => [s, counts[s]])
-    // append any unknown seniority types not in order
     Object.entries(counts).forEach(([s, n]) => { if (!SENIORITY_ORDER.includes(s)) ordered.push([s, n]) })
     return ordered
   }, [connections])
@@ -248,25 +247,23 @@ export default function FilterPanel({ connections, onChange }) {
 
   return (
     <div style={{
-      padding: '8px 14px 12px',
-      display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap',
-      borderTop: '1px solid rgba(0,0,0,0.06)',
+      display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
     }}>
-      <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.5)', fontWeight: 500, flexShrink: 0 }}>Filter:</span>
+      <span style={{ fontSize: 13, color: 'var(--text-faint)', fontWeight: 600, flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filters</span>
 
       {/* Keyword */}
       <input
         style={{
-          width: 155, fontSize: 13, padding: '5px 9px',
-          background: '#EEF3F8', border: '1px solid transparent',
-          borderRadius: 4, transition: 'all 0.15s', outline: 'none',
-          fontFamily: 'inherit', color: 'rgba(0,0,0,0.85)',
+          width: 160, fontSize: 13, padding: '7px 12px',
+          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 20, transition: 'all 0.2s', outline: 'none',
+          fontFamily: 'inherit', color: 'var(--text-main)',
         }}
         placeholder="Name, title…"
         value={filters.keyword}
         onChange={e => update({ keyword: e.target.value })}
-        onFocus={e => { e.target.style.background = '#fff'; e.target.style.borderColor = 'var(--li-blue)' }}
-        onBlur={e => { e.target.style.background = '#EEF3F8'; e.target.style.borderColor = 'transparent' }}
+        onFocus={e => { e.target.style.background = 'rgba(255,255,255,0.06)'; e.target.style.borderColor = 'rgba(255,255,255,0.2)' }}
+        onBlur={e => { e.target.style.background = 'rgba(255,255,255,0.03)'; e.target.style.borderColor = 'rgba(255,255,255,0.08)' }}
       />
 
       <MultiDropdown label="Category"  options={categories}  selected={filters.categories}
@@ -285,11 +282,10 @@ export default function FilterPanel({ connections, onChange }) {
         onToggle={v => toggleArr('tags', v)} onClear={() => update({ tags: [] })} />
 
       {activeCount > 0 && (
-        <button onClick={clearAll}
+        <button onClick={clearAll} className="btn-ghost"
           style={{
-            fontSize: 12, padding: '5px 10px', borderRadius: 4,
-            background: 'rgba(10,102,194,0.07)', color: 'var(--li-blue)',
-            border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
+            fontSize: 12, padding: '6px 12px', borderRadius: 20,
+            color: 'var(--text-muted)', fontFamily: 'inherit', fontWeight: 600,
           }}>
           ✕ Clear all ({activeCount})
         </button>

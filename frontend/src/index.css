@@ -7,10 +7,56 @@
 :root {
   --font-display: 'Instrument Serif', serif;
   --font-body: 'Almarai', sans-serif;
+  
+  /* ── Dark Cinematic Palette ──────────────────────────────────── */
+  --bg-dark:         #000000;
+  --bg-panel:        rgba(255,255,255,0.02);
+  --bg-panel-hover:  rgba(255,255,255,0.04);
+  
+  --border-light:    rgba(255,255,255,0.06);
+  --border-glow:     rgba(255,255,255,0.15);
+  
+  --text-main:       rgba(255,255,255,0.95);
+  --text-muted:      rgba(255,255,255,0.45);
+  --text-faint:      rgba(255,255,255,0.25);
+  
+  --accent-emerald:  #34d399;
+  --accent-blue:     #4fa3ff;
+  --accent-amber:    #fbbf24;
+  --accent-purple:   #c084fc;
+  
+  --r-pill: 24px;
+  --r-card: 16px;
+  --r-sm:   6px;
+  
+  --transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-body { font-family: var(--font-body); }
 
-/* ═══ LIQUID GLASS ══════════════════════════════════════════════ */
+body {
+  font-family: var(--font-body);
+  background: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══ GLOBAL FONT OVERRIDE ══════════════════════════════════════════ */
+* {
+  font-family: 'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 99px; }
+
+.mono { font-family: 'Courier New', monospace; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-full { width: 100%; }
+
+/* ═══ LIQUID GLASS (from landing page) ═════════════════════════════ */
 .liquid-glass {
   background: rgba(255,255,255,0.01);
   background-blend-mode: luminosity;
@@ -37,307 +83,178 @@ body { font-family: var(--font-body); }
   pointer-events: none;
 }
 
-/* ═══ FADE-RISE ANIMATIONS ═════════════════════════════════════════ */
-@keyframes fade-rise {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-rise           { animation: fade-rise 0.8s ease-out both; }
-.animate-fade-rise-delay     { animation: fade-rise 0.8s ease-out 0.2s both; }
-.animate-fade-rise-delay-2   { animation: fade-rise 0.8s ease-out 0.4s both; }
-.animate-fade-rise-delay-3   { animation: fade-rise 0.8s ease-out 0.6s both; }
-.animate-fade-rise-delay-4   { animation: fade-rise 0.8s ease-out 0.8s both; }
-
-/* ═══ GLOBAL FONT OVERRIDE ══════════════════════════════════════════ */
-
-/* ═══ GLOBAL FONT (Prisma design system) ═══════════════════════ */
-* {
-  font-family: 'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-}
-
-/* ═══ NOISE TEXTURE UTILITIES ══════════════════════════════════ */
-.noise-overlay {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 200px 200px;
-}
-
+/* ═══ BACKGROUND NOISE ════════════════════════════════════════════ */
 .bg-noise {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 180px 180px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   LINKEDIN DESIGN SYSTEM — Pixel-accurate clone
-   Colors from: linkedin.com source inspection
-═══════════════════════════════════════════════════════════════ */
-
-
-:root {
-  /* ── LinkedIn exact palette ──────────────────────────────────── */
-  --li-blue:         #0A66C2;
-  --li-blue-hover:   #004182;
-  --li-blue-press:   #00356B;
-  --li-blue-tint:    #EAF0F9;
-  --li-blue-light:   rgba(10, 102, 194, 0.1);
-
-  --li-bg:           #F3F2EF;        /* page background */
-  --li-white:        #FFFFFF;        /* card background */
-
-  --li-border:       rgba(0,0,0,0.08);
-  --li-border-dark:  rgba(0,0,0,0.15);
-
-  --li-text:         rgba(0,0,0,0.9);      /* primary text */
-  --li-text-2:       rgba(0,0,0,0.6);      /* secondary */
-  --li-text-3:       rgba(0,0,0,0.4);      /* placeholder */
-
-  --li-green:        #057642;
-  --li-green-light:  rgba(5, 118, 66, 0.12);
-  --li-gold:         #915907;
-  --li-gold-light:   rgba(145, 89, 7, 0.1);
-  --li-red:          #B24020;
-  --li-red-light:    rgba(178, 64, 32, 0.1);
-  --li-teal:         #0073B1;
-  --li-teal-light:   rgba(0, 115, 177, 0.1);
-
-  /* ── Shadows (LinkedIn style) ────────────────────────────────── */
-  --card-shadow:     0 0 0 1px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06);
-  --card-shadow-hover: 0 0 0 1px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.12);
-
-  /* ── Radius ──────────────────────────────────────────────────── */
-  --r-pill: 24px;
-  --r-card: 8px;
-  --r-sm:   4px;
-
-  --transition: 0.15s ease;
-}
-
-/* ── Reset ──────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto,
-               Helvetica, Arial, sans-serif;
-  background: var(--li-bg);
-  color: var(--li-text);
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ── Scrollbar ───────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--li-bg); }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 99px; }
-
-.mono { font-family: 'Courier New', monospace; }
-.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.w-full { width: 100%; }
-
 /* ══════════════════════════════════════
-   LINKEDIN CARD
+   GLASS PANELS (Command Center)
 ══════════════════════════════════════ */
-.li-card {
-  background: var(--li-white);
+.glass-panel {
+  background: var(--bg-panel);
   border-radius: var(--r-card);
-  box-shadow: var(--card-shadow);
-  /* no overflow:hidden — would clip fixed-position dropdowns */
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color var(--transition);
 }
 
 /* ══════════════════════════════════════
-   LINKEDIN BUTTONS
+   BUTTONS (Cinematic style)
 ══════════════════════════════════════ */
 .btn {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 8px;
   border-radius: var(--r-pill);
-  font: 600 14px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font: 600 13px/1 var(--font-body);
   cursor: pointer; border: none; white-space: nowrap;
   transition: all var(--transition);
-  padding: 8px 20px;
+  padding: 10px 20px;
 }
 
-/* Primary — solid blue pill */
+/* Primary — liquid glass with subtle glow */
 .btn-primary {
-  background: var(--li-blue);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
   color: #fff;
 }
-.btn-primary:hover { background: var(--li-blue-hover); }
-.btn-primary:active { background: var(--li-blue-press); }
+.btn-primary:hover { 
+  background: rgba(255,255,255,0.1); 
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 0 15px rgba(255,255,255,0.05);
+}
 
-/* Outline — LinkedIn "Message" style */
+/* Outline */
 .btn-outline {
-  background: var(--li-white);
-  color: var(--li-blue);
-  border: 1.5px solid var(--li-blue);
-}
-.btn-outline:hover { background: var(--li-blue-tint); }
-
-/* Ghost — soft hover */
-.btn-ghost {
   background: transparent;
-  color: var(--li-text-2);
-  border: none;
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
 }
-.btn-ghost:hover { background: var(--li-bg); color: var(--li-text); border-radius: var(--r-sm); }
+.btn-outline:hover { background: var(--bg-panel-hover); color: var(--text-main); }
 
-/* Success */
-.btn-success {
-  background: var(--li-green);
-  color: #fff;
-}
-.btn-success:hover { filter: brightness(0.92); }
+/* Ghost */
+.btn-ghost { background: transparent; color: var(--text-muted); padding: 8px 12px; }
+.btn-ghost:hover { color: var(--text-main); background: var(--bg-panel); border-radius: var(--r-sm); }
+
+.btn-success { background: rgba(52,211,153,0.15); color: var(--accent-emerald); border: 1px solid rgba(52,211,153,0.3); }
+.btn-success:hover { background: rgba(52,211,153,0.25); }
 
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ══════════════════════════════════════
-   INPUTS
+   INPUTS (Command Palette Style)
 ══════════════════════════════════════ */
 .input {
-  background: var(--li-white);
-  border: 1px solid var(--li-border-dark);
-  border-radius: var(--r-card);
-  color: var(--li-text);
-  font: 14px -apple-system, 'Segoe UI', sans-serif;
-  padding: 8px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--r-pill);
+  color: var(--text-main);
+  font: 14px var(--font-body);
+  padding: 12px 18px;
   outline: none; width: 100%;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: all var(--transition);
 }
-.input::placeholder { color: var(--li-text-3); }
+.input::placeholder { color: var(--text-faint); }
 .input:focus {
-  border-color: var(--li-blue);
-  box-shadow: 0 0 0 1px var(--li-blue);
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.05);
 }
 
 /* ══════════════════════════════════════
-   CATEGORY BADGES — LinkedIn pill style
+   GLOWING CATEGORY BADGES
 ══════════════════════════════════════ */
 .badge {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 10px; border-radius: var(--r-pill);
-  font: 600 11px/1 -apple-system, 'Segoe UI', sans-serif;
+  padding: 4px 10px; border-radius: var(--r-pill);
+  font: 600 10px/1 var(--font-body);
+  letter-spacing: 0.05em; text-transform: uppercase;
+  border: 1px solid transparent;
 }
-.badge-swe       { background: var(--li-teal-light);  color: var(--li-teal); }
-.badge-ds        { background: rgba(82,0,145,0.08);   color: #520091; }
-.badge-hr        { background: var(--li-green-light);  color: var(--li-green); }
-.badge-founder   { background: var(--li-gold-light);   color: var(--li-gold); }
-.badge-student   { background: rgba(0,102,194,0.1);   color: var(--li-blue); }
-.badge-marketing { background: rgba(178,64,32,0.08);  color: var(--li-red); }
-.badge-other     { background: rgba(0,0,0,0.06);      color: var(--li-text-2); }
+.badge-swe       { background: rgba(79, 163, 255, 0.1); color: var(--accent-blue);   border-color: rgba(79, 163, 255, 0.2); }
+.badge-ds        { background: rgba(192, 132, 252, 0.1); color: var(--accent-purple); border-color: rgba(192, 132, 252, 0.2); }
+.badge-hr        { background: rgba(52, 211, 153, 0.1); color: var(--accent-emerald); border-color: rgba(52, 211, 153, 0.2); }
+.badge-founder   { background: rgba(251, 191, 36, 0.1); color: var(--accent-amber);  border-color: rgba(251, 191, 36, 0.2); }
+.badge-student   { background: rgba(255, 255, 255, 0.05); color: var(--text-muted);  border-color: rgba(255, 255, 255, 0.1); }
+.badge-marketing { background: rgba(248, 113, 113, 0.1); color: #f87171;           border-color: rgba(248, 113, 113, 0.2); }
+.badge-other     { background: rgba(255, 255, 255, 0.03); color: var(--text-faint);  border-color: rgba(255, 255, 255, 0.08); }
 
 /* ══════════════════════════════════════
-   TAGS — small LinkedIn-style chips
+   TAGS
 ══════════════════════════════════════ */
 .tag {
   display: inline-flex; align-items: center;
-  padding: 2px 8px; border-radius: var(--r-pill);
-  font: 500 11px/1 -apple-system, 'Segoe UI', sans-serif;
+  padding: 3px 10px; border-radius: var(--r-pill);
+  font: 500 11px/1 var(--font-body);
   white-space: nowrap; border: 1px solid;
 }
-.tag-hiring   { background: var(--li-green-light); color: var(--li-green);  border-color: rgba(5,118,66,0.25); }
-.tag-tech     { background: var(--li-teal-light);  color: var(--li-teal);   border-color: rgba(0,115,177,0.25); }
-.tag-business { background: var(--li-gold-light);  color: var(--li-gold);   border-color: rgba(145,89,7,0.2); }
-.tag-hv       { background: var(--li-blue-light);  color: var(--li-blue);   border-color: rgba(10,102,194,0.2); }
-.tag-startup  { background: var(--li-red-light);   color: var(--li-red);    border-color: rgba(178,64,32,0.2); }
-.tag-academia { background: rgba(82,0,145,0.08);  color: #520091;          border-color: rgba(82,0,145,0.2); }
+.tag-hiring   { background: rgba(52, 211, 153, 0.05); color: var(--accent-emerald); border-color: rgba(52, 211, 153, 0.15); }
+.tag-tech     { background: rgba(79, 163, 255, 0.05); color: var(--accent-blue);    border-color: rgba(79, 163, 255, 0.15); }
+.tag-business { background: rgba(251, 191, 36, 0.05); color: var(--accent-amber);   border-color: rgba(251, 191, 36, 0.15); }
+.tag-hv       { background: rgba(255, 255, 255, 0.1); color: #fff;                  border-color: rgba(255, 255, 255, 0.3); font-weight: 700; }
+.tag-startup  { background: rgba(248, 113, 113, 0.05); color: #f87171;            border-color: rgba(248, 113, 113, 0.15); }
+.tag-academia { background: rgba(192, 132, 252, 0.05); color: var(--accent-purple); border-color: rgba(192, 132, 252, 0.15); }
 
 /* ══════════════════════════════════════
    SENIORITY DOTS
 ══════════════════════════════════════ */
-.seniority-dot            { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.seniority-dot-intern     { background: rgba(0,0,0,0.25); }
-.seniority-dot-junior     { background: var(--li-teal); }
-.seniority-dot-mid        { background: var(--li-blue); }
-.seniority-dot-senior     { background: var(--li-gold); }
-.seniority-dot-lead       { background: var(--li-green); }
-.seniority-dot-exec       { background: #B24020; }
+.seniority-dot            { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+.seniority-dot-intern     { color: var(--text-faint); background: currentColor; box-shadow: none; }
+.seniority-dot-junior     { color: var(--accent-blue); background: currentColor; }
+.seniority-dot-mid        { color: var(--accent-purple); background: currentColor; }
+.seniority-dot-senior     { color: var(--accent-amber); background: currentColor; }
+.seniority-dot-lead       { color: var(--accent-emerald); background: currentColor; }
+.seniority-dot-exec       { color: #f87171; background: currentColor; }
 
 /* ══════════════════════════════════════
    SCORE PILL
 ══════════════════════════════════════ */
 .score-pill {
-  font: 600 11px/1 monospace;
-  padding: 2px 7px; border-radius: var(--r-sm);
+  font: 600 12px/1 'Instrument Serif', serif;
+  padding: 3px 8px; border-radius: var(--r-sm);
+  letter-spacing: 0.05em;
 }
-.score-high   { color: var(--li-green); background: var(--li-green-light); }
-.score-mid    { color: var(--li-gold);  background: var(--li-gold-light); }
-.score-low    { color: var(--li-text-2); background: rgba(0,0,0,0.05); }
+.score-high   { color: var(--accent-emerald); background: rgba(52,211,153,0.1); }
+.score-mid    { color: var(--accent-amber);  background: rgba(251,191,36,0.1); }
+.score-low    { color: var(--text-faint); background: rgba(255,255,255,0.05); }
 
 /* ══════════════════════════════════════
-   STAT CARDS — LinkedIn "glance" style
-══════════════════════════════════════ */
-.stat-card {
-  background: var(--li-white);
-  border-radius: var(--r-card);
-  box-shadow: var(--card-shadow);
-  padding: 16px 20px;
-  transition: box-shadow var(--transition);
-  cursor: default;
-}
-.stat-card:hover { box-shadow: var(--card-shadow-hover); }
-.stat-value {
-  font: 700 28px/1 -apple-system, 'Segoe UI', sans-serif;
-  letter-spacing: -0.02em;
-}
-.stat-label {
-  font: 400 12px/1 -apple-system, 'Segoe UI', sans-serif;
-  color: var(--li-text-2);
-  margin-top: 5px;
-}
-
-/* Accent lines (top border) */
-.stat-card-blue  { border-top: 3px solid var(--li-blue); }
-.stat-card-teal  { border-top: 3px solid var(--li-teal); }
-.stat-card-green { border-top: 3px solid var(--li-green); }
-.stat-card-gold  { border-top: 3px solid var(--li-gold); }
-
-/* ══════════════════════════════════════
-   UPLOAD ZONE
-══════════════════════════════════════ */
-.upload-zone {
-  border: 2px dashed rgba(0,0,0,0.2);
-  border-radius: var(--r-card);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.upload-zone:hover, .upload-zone.dragging {
-  border-color: var(--li-blue);
-  background: var(--li-blue-tint);
-}
-
-/* ══════════════════════════════════════
-   FILTER CHIP
+   FILTER CHIP (Command style)
 ══════════════════════════════════════ */
 .filter-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 14px; border-radius: var(--r-pill);
-  border: 1px solid var(--li-border-dark);
-  background: var(--li-white);
-  font: 500 13px -apple-system, 'Segoe UI', sans-serif;
-  color: var(--li-text-2); cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; border-radius: var(--r-pill);
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  font: 500 12px var(--font-body);
+  color: var(--text-muted); cursor: pointer; white-space: nowrap;
   transition: all var(--transition);
-  box-shadow: var(--card-shadow);
 }
-.filter-chip:hover   { border-color: var(--li-blue); color: var(--li-blue); background: var(--li-blue-tint); }
-.filter-chip.active  { border-color: var(--li-blue); color: var(--li-blue); background: var(--li-blue-tint); font-weight: 700; }
+.filter-chip:hover   { border-color: rgba(255,255,255,0.2); color: var(--text-main); background: rgba(255,255,255,0.05); }
+.filter-chip.active  { border-color: rgba(255,255,255,0.4); color: #fff; background: rgba(255,255,255,0.1); box-shadow: inset 0 0 10px rgba(255,255,255,0.05); }
 
 /* ══════════════════════════════════════
-   CONTACT DRAWER — LinkedIn profile panel
+   CONTACT DRAWER (Glassmorphic)
 ══════════════════════════════════════ */
 .drawer-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.5);
-  animation: fadeIn 0.15s ease;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
 }
 .drawer {
   position: fixed; top: 0; right: 0; bottom: 0;
-  width: 420px; z-index: 201;
-  background: var(--li-white);
-  border-left: 1px solid var(--li-border);
+  width: 440px; z-index: 201;
+  background: rgba(10,10,10,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid var(--border-light);
   overflow-y: auto;
-  animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -10px 0 40px rgba(0,0,0,0.5);
 }
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
@@ -345,109 +262,115 @@ body {
 }
 .drawer-header {
   position: sticky; top: 0; z-index: 5;
-  background: var(--li-white);
-  border-bottom: 1px solid var(--li-border);
-  padding: 16px 20px;
+  background: rgba(10,10,10,0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-light);
+  padding: 24px;
 }
 
 .contact-field {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 12px 0; border-bottom: 1px solid var(--li-border);
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .contact-field:last-child { border-bottom: none; }
 .contact-field-icon {
-  width: 32px; height: 32px; flex-shrink: 0;
-  background: var(--li-bg);
-  border: 1px solid var(--li-border);
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-light);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
+  font-size: 16px; color: var(--text-muted);
 }
 .contact-field-label {
-  font: 600 11px/1 -apple-system, 'Segoe UI', sans-serif;
-  letter-spacing: 0.04em; text-transform: uppercase;
-  color: var(--li-text-2); margin-bottom: 4px;
+  font: 600 10px/1 var(--font-body);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-faint); margin-bottom: 6px;
 }
 .contact-field-value {
-  font: 14px -apple-system, 'Segoe UI', sans-serif;
-  color: var(--li-text); word-break: break-all;
+  font: 14px var(--font-body);
+  color: var(--text-main); word-break: break-all;
 }
-.contact-field-value a { color: var(--li-blue); text-decoration: none; }
-.contact-field-value a:hover { text-decoration: underline; color: var(--li-blue-hover); }
+.contact-field-value a { color: var(--accent-blue); text-decoration: none; }
+.contact-field-value a:hover { text-decoration: underline; color: #fff; }
 
 /* ══════════════════════════════════════
-   MODAL
+   MODAL (Glassmorphic)
 ══════════════════════════════════════ */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 300;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center; padding: 20px;
-  animation: fadeIn 0.15s ease;
+  animation: fadeIn 0.2s ease;
 }
 .modal-box {
-  background: var(--li-white);
+  background: rgba(15,15,15,0.9);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
   border-radius: var(--r-card);
-  padding: 24px;
-  width: 100%; max-width: 520px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.12), 0 8px 32px rgba(0,0,0,0.2);
-  animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 32px;
+  width: 100%; max-width: 560px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes scaleUp {
-  from { transform: scale(0.97); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.95) translateY(10px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 /* ══════════════════════════════════════
-   DATA TABLE — LinkedIn search results
+   DATA LIST VIEW (Replacing generic table)
 ══════════════════════════════════════ */
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
-  padding: 10px 16px;
-  font: 600 11px/1 -apple-system, 'Segoe UI', sans-serif;
-  letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--li-text-2);
-  background: var(--li-white);
-  border-bottom: 1px solid var(--li-border);
+  padding: 12px 20px;
+  font: 600 10px/1 var(--font-body);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-faint);
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-light);
   text-align: left; white-space: nowrap;
   cursor: pointer; user-select: none;
   position: sticky; top: 0; z-index: 5;
 }
-.data-table th:hover { color: var(--li-blue); }
-.data-table th.sorted { color: var(--li-blue); }
+.data-table th:hover { color: var(--text-main); }
+.data-table th.sorted { color: #fff; font-weight: 700; }
 .data-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--li-border);
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
   vertical-align: middle; font-size: 14px;
 }
-.data-table tr:hover td { background: var(--li-bg); cursor: pointer; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); cursor: pointer; }
 .data-table tr:last-child td { border-bottom: none; }
 
 /* ══════════════════════════════════════
-   AVATAR — LinkedIn circular style
+   AVATAR (Glowing)
 ══════════════════════════════════════ */
 .avatar {
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font: 700 14px/1 -apple-system, 'Segoe UI', sans-serif;
+  font: 700 13px/1 var(--font-body);
   color: #fff; flex-shrink: 0;
-  border: 2px solid var(--li-white);
-  box-shadow: 0 0 0 2px var(--li-border);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 /* ══════════════════════════════════════
    BAR ROWS
 ══════════════════════════════════════ */
-.bar-row { display: grid; grid-template-columns: 120px 1fr 36px; align-items: center; gap: 10px; padding: 5px 0; }
-.bar-track { height: 5px; background: var(--li-bg); border-radius: 99px; overflow: hidden; }
-.bar-fill  { height: 100%; border-radius: 99px; transition: width 0.9s ease; }
+.bar-row { display: grid; grid-template-columns: 120px 1fr 36px; align-items: center; gap: 12px; padding: 6px 0; }
+.bar-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 99px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); background: #fff; }
 
 /* ══════════════════════════════════════
    SECTION LABEL
 ══════════════════════════════════════ */
 .eyebrow {
-  font: 600 11px/1 -apple-system, 'Segoe UI', sans-serif;
-  letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--li-text-2);
+  font: 600 10px/1 var(--font-body);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 /* ══════════════════════════════════════
@@ -455,8 +378,8 @@ body {
 ══════════════════════════════════════ */
 .spinner {
   width: 16px; height: 16px; flex-shrink: 0;
-  border: 2px solid rgba(0,0,0,0.12);
-  border-top-color: var(--li-blue);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
 }
@@ -467,34 +390,20 @@ body {
 ══════════════════════════════════════ */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
-.anim-in   { animation: fadeUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.anim-fade { animation: fadeIn 0.18s ease both; }
+.anim-in   { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-fade { animation: fadeIn 0.3s ease both; }
 
-.anim-stagger-1 { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
-.anim-stagger-2 { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
-.anim-stagger-3 { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
+.anim-stagger-1 { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+.anim-stagger-2 { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+.anim-stagger-3 { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
 
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
-  100% { transform: translateY(0px); }
-}
-.icon-float {
-  display: inline-block;
-  animation: float 4s ease-in-out infinite;
-}
-
-.hover-lift {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.hover-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-}
-
-/* ── LinkedIn divider ───────────────────────────────────────────── */
+/* ── Divider ───────────────────────────────────────────── */
 .li-divider {
-  height: 1px; background: var(--li-border); margin: 8px 0;
+  height: 1px; background: rgba(255,255,255,0.06); margin: 16px 0;
+}
+
+/* ── Typography Utility (Serif) ───────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
 }

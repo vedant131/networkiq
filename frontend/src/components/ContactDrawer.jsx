@@ -1,16 +1,5 @@
 import React, { useState } from 'react'
 
-/**
- * ContactDrawer — LinkedIn-style contact panel.
- *
- * Key fixes + features:
- *  - Email shows ONLY the connection's own email (never account email)
- *  - Quick-copy for email + LinkedIn URL
- *  - Connection freshness (age + badge)
- *  - "Find Similar" — filter network to similar people
- *  - "People at same company" count
- */
-
 const CATEGORY_EMOJI = {
   'Software Engineer':    '💻',
   'Data Scientist':       '📊',
@@ -45,14 +34,7 @@ const SENIORITY_DOT = {
   'Lead':      'seniority-dot-lead',
   'Executive': 'seniority-dot-exec',
 }
-const LI_AVATAR_COLORS = [
-  '#0A66C2','#057642','#915907','#B24020','#520091','#0073B1','#7B5E00',
-]
-function avatarColor(name) {
-  return LI_AVATAR_COLORS[(name?.charCodeAt(0) ?? 65) % LI_AVATAR_COLORS.length]
-}
 
-/* ── Connection age utilities ───────────────────────────────── */
 function parseConnectionAge(dateStr) {
   if (!dateStr || dateStr === 'nan' || dateStr === '') return null
   const d = new Date(dateStr)
@@ -75,20 +57,21 @@ function FreshnessBadge({ connected_on }) {
   if (!age) return null
   if (age.days <= 90) return (
     <span style={{
-      background: 'rgba(5,118,66,0.1)', color: '#057642',
+      background: 'rgba(52,211,153,0.1)', color: 'var(--accent-emerald)',
+      border: '1px solid rgba(52,211,153,0.2)',
       borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '2px 7px',
-    }}>🆕 NEW</span>
+    }}>NEW</span>
   )
   if (age.days >= 730) return (
     <span style={{
-      background: 'rgba(145,89,7,0.1)', color: '#915907',
+      background: 'rgba(251,191,36,0.1)', color: 'var(--accent-amber)',
+      border: '1px solid rgba(251,191,36,0.2)',
       borderRadius: 99, fontSize: 10, fontWeight: 700, padding: '2px 7px',
-    }}>💤 RECONNECT</span>
+    }}>COLD</span>
   )
   return null
 }
 
-/* ── Quick Copy button ──────────────────────────────────────── */
 function CopyBtn({ value, label }) {
   const [copied, setCopied] = useState(false)
   if (!value || value === 'nan' || value === '') return null
@@ -100,40 +83,40 @@ function CopyBtn({ value, label }) {
   }
   return (
     <button onClick={copy} title={`Copy ${label}`} style={{
-      border: 'none', background: copied ? 'rgba(5,118,66,0.1)' : 'rgba(0,0,0,0.06)',
-      color: copied ? '#057642' : 'rgba(0,0,0,0.5)',
-      borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-      padding: '2px 7px', fontFamily: 'inherit', transition: 'all 0.15s',
+      border: '1px solid',
+      background: copied ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)',
+      borderColor: copied ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.1)',
+      color: copied ? 'var(--accent-emerald)' : 'var(--text-muted)',
+      borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+      padding: '4px 10px', transition: 'all 0.15s',
     }}>
       {copied ? '✓ Copied' : '📋 Copy'}
     </button>
   )
 }
 
-/* ── Score bar ──────────────────────────────────────────────── */
 function ScoreBar({ score }) {
   const pct   = Math.round((score ?? 0) * 100)
-  const color = score > 0.7 ? 'var(--li-green)' : score > 0.4 ? 'var(--li-gold)' : 'rgba(0,0,0,0.2)'
+  const color = score > 0.7 ? 'var(--accent-emerald)' : score > 0.4 ? 'var(--accent-amber)' : 'var(--text-faint)'
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div style={{ flex: 1, height: 5, background: 'rgba(0,0,0,0.07)', borderRadius: 99 }}>
-        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: color, transition: 'width 0.8s ease' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: color, transition: 'width 0.8s ease', boxShadow: `0 0 10px ${color}` }} />
       </div>
       <span style={{
-        fontFamily: 'monospace', fontSize: 12, fontWeight: 700, minWidth: 28, textAlign: 'right',
-        color: score > 0.7 ? 'var(--li-green)' : score > 0.4 ? 'var(--li-gold)' : 'rgba(0,0,0,0.4)',
+        fontFamily: 'var(--font-display)', fontSize: 18, minWidth: 28, textAlign: 'right',
+        color: color,
       }}>{pct}</span>
     </div>
   )
 }
 
-/* ── Field row ──────────────────────────────────────────────── */
 function Field({ icon, label, children, action }) {
   return (
     <div className="contact-field">
       <div className="contact-field-icon">{icon}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
           <div className="contact-field-label">{label}</div>
           {action}
         </div>
@@ -145,15 +128,13 @@ function Field({ icon, label, children, action }) {
 
 function Section({ title, children }) {
   return (
-    <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-      <div className="eyebrow" style={{ marginBottom: 12 }}>{title}</div>
+    <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="eyebrow" style={{ marginBottom: 16 }}>{title}</div>
       {children}
     </div>
   )
 }
 
-/* ── Main Component ─────────────────────────────────────────── */
-/* ── Main Component ─────────────────────────────────────────── */
 export default function ContactDrawer({
   connection: c, sessionId, onClose, onMessage, onFindSimilar, allConnections = [],
 }) {
@@ -169,7 +150,6 @@ export default function ContactDrawer({
     : `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(c.full_name)}`
   const googleUrl  = `https://www.google.com/search?q=${encodeURIComponent(`${c.full_name} ${c.company} LinkedIn`)}`
 
-  // ── Connection's own email ONLY — never account email ──
   const connEmail = enrichedEmail || ((c.email && c.email !== '' && c.email !== 'nan') ? c.email : null)
   
   const handleEnrich = async () => {
@@ -180,7 +160,7 @@ export default function ContactDrawer({
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Email not found') }
       const data = await res.json()
       setEnrichedEmail(data.email)
-      c.email = data.email // Mutate local object so it stays if drawer is closed/opened
+      c.email = data.email 
     } catch (e) {
       setEnrichError(e.message)
     } finally {
@@ -191,12 +171,10 @@ export default function ContactDrawer({
   const age = parseConnectionAge(c.connected_on)
   const score = c.score ?? 0
 
-  // People at same company
   const sameCompany = allConnections.filter(
     x => x.id !== c.id && x.company && x.company === c.company
   )
 
-  // Profile summary for clipboard
   const profileSummary = [
     c.full_name,
     `${c.job_title_clean || c.job_title_raw} at ${c.company}`,
@@ -209,40 +187,31 @@ export default function ContactDrawer({
       <div className="drawer-overlay" onClick={onClose} />
       <aside className="drawer" id="contact-drawer">
 
-        {/* ── Sticky header ── */}
         <div className="drawer-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <span className="eyebrow">Contact Details</span>
-            <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <span className="eyebrow">Dossier</span>
+            <div style={{ display: 'flex', gap: 10 }}>
               <CopyBtn value={profileSummary} label="Profile" />
-              <button onClick={onClose} style={{
-                background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
-                color: 'rgba(0,0,0,0.4)', lineHeight: 1, padding: '2px 4px',
-              }}>✕</button>
+              <button onClick={onClose} className="btn-ghost" style={{ fontSize: 20, padding: '2px 8px' }}>✕</button>
             </div>
           </div>
 
-          {/* Avatar + name */}
-          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <div style={{
-              width: 64, height: 64, borderRadius: '50%', flexShrink: 0,
-              background: avatarColor(c.full_name),
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24, fontWeight: 700, color: '#fff',
-              border: '3px solid white', boxShadow: '0 0 0 2px rgba(0,0,0,0.1)',
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <div className="avatar" style={{
+              width: 72, height: 72, fontSize: 28, boxShadow: '0 0 20px rgba(255,255,255,0.1)',
             }}>
               {c.full_name?.[0]?.toUpperCase() ?? '?'}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: 'rgba(0,0,0,0.9)', marginBottom: 4, lineHeight: 1.2 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4, letterSpacing: '0.02em' }}>
                 {c.full_name}
               </h2>
-              <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.6)', marginBottom: 8, lineHeight: 1.4 }}>
+              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 10 }}>
                 {c.job_title_clean || c.job_title_raw}
-                {c.company && <> · <strong style={{ color: 'rgba(0,0,0,0.85)' }}>{c.company}</strong></>}
+                {c.company && <> · <strong style={{ color: 'var(--text-main)' }}>{c.company}</strong></>}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span className={`badge ${BADGE_CLASS[c.category] || 'badge-other'}`} style={{ fontSize: 11 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span className={`badge ${BADGE_CLASS[c.category] || 'badge-other'}`} style={{ fontSize: 10 }}>
                   {CATEGORY_EMOJI[c.category]} {c.category}
                 </span>
                 <FreshnessBadge connected_on={c.connected_on} />
@@ -250,142 +219,80 @@ export default function ContactDrawer({
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <a href={profileUrl} target="_blank" rel="noreferrer" id="view-linkedin-btn"
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                padding: '8px 12px', borderRadius: 20,
-                background: 'var(--li-blue)', color: '#fff',
-                fontSize: 13, fontWeight: 600, textDecoration: 'none',
-              }}>
+          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+            <a href={profileUrl} target="_blank" rel="noreferrer" id="view-linkedin-btn" className="btn btn-outline"
+              style={{ flex: 1, justifyContent: 'center', textDecoration: 'none' }}>
               <LinkedInIcon /> LinkedIn
             </a>
-            <button id="drawer-message-btn" onClick={() => onMessage(c)}
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                padding: '8px 12px', borderRadius: 20,
-                background: 'white', color: 'var(--li-blue)',
-                border: '1.5px solid var(--li-blue)',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}>
+            <button id="drawer-message-btn" className="btn btn-primary liquid-glass" onClick={() => onMessage(c)}
+              style={{ flex: 1, justifyContent: 'center' }}>
               ✉️ Message
             </button>
-            <a href={googleUrl} target="_blank" rel="noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '8px 12px', borderRadius: 20,
-                border: '1.5px solid rgba(0,0,0,0.15)',
-                color: 'rgba(0,0,0,0.5)', textDecoration: 'none', fontSize: 16,
-              }}>🔍</a>
+            <a href={googleUrl} target="_blank" rel="noreferrer" className="btn btn-outline"
+              style={{ padding: '10px', textDecoration: 'none' }}>🔍</a>
             {onFindSimilar && (
-              <button title="Find similar people in your network" onClick={() => { onClose(); onFindSimilar(c) }}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '8px 12px', borderRadius: 20,
-                  border: '1.5px solid rgba(0,0,0,0.15)',
-                  background: 'white', color: 'rgba(0,0,0,0.5)',
-                  fontSize: 16, cursor: 'pointer',
-                }}>👥</button>
+              <button title="Find similar people" onClick={() => { onClose(); onFindSimilar(c) }} className="btn btn-outline"
+                style={{ padding: '10px' }}>👥</button>
             )}
           </div>
         </div>
 
-        {/* ── Contact Info ── */}
-        <Section title="Contact Info · LinkedIn Fields">
-
-          {/* LinkedIn Profile */}
-          <Field icon="🔗" label="LinkedIn Profile"
-            action={hasRealUrl ? <CopyBtn value={c.linkedin_url} label="URL" /> : null}>
-            <a href={profileUrl} target="_blank" rel="noreferrer">
+        <Section title="Contact Info">
+          <Field icon="🔗" label="LinkedIn Profile" action={hasRealUrl ? <CopyBtn value={c.linkedin_url} label="URL" /> : null}>
+            <a href={profileUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)', textDecoration: 'none' }}>
               {hasRealUrl ? 'Open Profile ↗' : 'Search on LinkedIn ↗'}
             </a>
             {hasRealUrl && (
-              <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', marginTop: 2, wordBreak: 'break-all' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4, wordBreak: 'break-all' }}>
                 {c.linkedin_url.replace('https://', '')}
               </div>
             )}
           </Field>
 
-          {/* Email — ONLY the connection's email, never account email */}
-          <Field icon="📧" label="Email Address"
-            action={connEmail ? <CopyBtn value={connEmail} label="Email" /> : null}>
+          <Field icon="📧" label="Email Address" action={connEmail ? <CopyBtn value={connEmail} label="Email" /> : null}>
             {connEmail ? (
-              <a href={`mailto:${connEmail}`}>{connEmail}</a>
+              <a href={`mailto:${connEmail}`} style={{ color: 'var(--accent-emerald)', fontWeight: 600, textDecoration: 'none' }}>{connEmail}</a>
             ) : (
               <div>
                 {isEnriching ? (
-                  <div style={{ fontSize: 12, color: 'var(--li-blue)' }}>Searching databases...</div>
+                  <div style={{ fontSize: 12, color: 'var(--accent-blue)' }}><span className="spinner" style={{width:10,height:10,display:'inline-block',marginRight:6}}/>Searching databases...</div>
                 ) : (
                   <>
-                    <button onClick={handleEnrich} disabled={!c.company || c.company === 'nan'} style={{
-                      background: 'rgba(10,102,194,0.1)', color: 'var(--li-blue)',
-                      border: 'none', borderRadius: 20, padding: '4px 10px',
-                      fontSize: 12, fontWeight: 600, cursor: c.company && c.company !== 'nan' ? 'pointer' : 'not-allowed',
-                      opacity: c.company && c.company !== 'nan' ? 1 : 0.5,
-                    }}>✨ Find Email</button>
-                    {(!c.company || c.company === 'nan') && <div style={{fontSize: 11, color: 'rgba(0,0,0,0.4)', marginTop: 4}}>Company required to find email.</div>}
-                    {enrichError && <div style={{ fontSize: 11, color: 'red', marginTop: 4 }}>{enrichError}</div>}
+                    <button onClick={handleEnrich} disabled={!c.company || c.company === 'nan'} className="btn btn-outline" style={{
+                      padding: '4px 12px', fontSize: 12, borderRadius: 20, color: 'var(--accent-blue)', borderColor: 'rgba(79,163,255,0.3)',
+                    }}>✨ Deep Search Email</button>
+                    {(!c.company || c.company === 'nan') && <div style={{fontSize: 11, color: 'var(--text-faint)', marginTop: 6}}>Company required for deep search.</div>}
+                    {enrichError && <div style={{ fontSize: 11, color: '#f87171', marginTop: 6 }}>{enrichError}</div>}
                   </>
                 )}
               </div>
             )}
           </Field>
 
-          {/* Phone */}
-          <Field icon="📱" label="Phone Number">
-            <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 13 }}>Not included in LinkedIn export</span>
-          </Field>
-
-          {/* Website */}
-          <Field icon="🌐" label="Website / Portfolio">
-            <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 13 }}>Not included in LinkedIn export</span>
-          </Field>
-
-          {/* Address */}
-          <Field icon="🏠" label="Address">
-            <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 13 }}>Not included in LinkedIn export</span>
-          </Field>
-
-          {/* Twitter */}
-          <Field icon="𝕏" label="Twitter / X">
-            <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 13 }}>Not included in LinkedIn export</span>
-          </Field>
-
-          {/* Birthday */}
-          <Field icon="🎂" label="Birthday">
-            <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 13 }}>Not included in LinkedIn export</span>
-          </Field>
-
-          {/* Connected On — with age */}
           <Field icon="📅" label="Connected On">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{c.connected_on || '—'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--text-main)' }}>{c.connected_on || '—'}</span>
               {age && (
                 <span style={{
-                  fontSize: 11, color: 'rgba(0,0,0,0.4)',
-                  background: 'rgba(0,0,0,0.05)', borderRadius: 4, padding: '1px 6px',
+                  fontSize: 11, color: 'var(--text-muted)',
+                  background: 'rgba(255,255,255,0.05)', borderRadius: 6, padding: '2px 8px',
                 }}>{formatAge(age.days)}</span>
               )}
             </div>
           </Field>
         </Section>
 
-        {/* ── Current Position ── */}
-        <Section title="Current Position">
-          <Field icon="💼" label="Job Title">
+        <Section title="Current Affiliation">
+          <Field icon="💼" label="Role">
             <div>{c.job_title_clean || c.job_title_raw || '—'}</div>
-            {c.job_title_clean && c.job_title_raw && c.job_title_clean !== c.job_title_raw && (
-              <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.35)', marginTop: 2 }}>Raw: {c.job_title_raw}</div>
-            )}
           </Field>
-          <Field icon="🏢" label="Company">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>{c.company || '—'}</span>
+          <Field icon="🏢" label="Organization">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontWeight: 600 }}>{c.company || '—'}</span>
               {sameCompany.length > 0 && (
                 <span style={{
-                  fontSize: 11, background: 'rgba(10,102,194,0.1)', color: 'var(--li-blue)',
-                  borderRadius: 99, padding: '1px 7px', fontWeight: 600, cursor: 'default',
+                  fontSize: 10, background: 'rgba(79,163,255,0.1)', color: 'var(--accent-blue)', border: '1px solid rgba(79,163,255,0.2)',
+                  borderRadius: 99, padding: '2px 8px', fontWeight: 600, cursor: 'default', textTransform: 'uppercase', letterSpacing: '0.05em'
                 }} title={sameCompany.slice(0,5).map(x=>x.full_name).join(', ')}>
                   +{sameCompany.length} in network
                 </span>
@@ -394,31 +301,30 @@ export default function ContactDrawer({
           </Field>
         </Section>
 
-        {/* ── AI Analysis ── */}
-        <Section title="AI Analysis">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Row label="Category">
+        <Section title="Intelligence Profile">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Row label="Sector">
               <span className={`badge ${BADGE_CLASS[c.category] || 'badge-other'}`}>
                 {CATEGORY_EMOJI[c.category]} {c.category}
               </span>
             </Row>
-            <Row label="Seniority">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Row label="Level">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div className={`seniority-dot ${SENIORITY_DOT[c.seniority] || 'seniority-dot-mid'}`} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(0,0,0,0.85)' }}>{c.seniority || 'Unknown'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>{c.seniority || 'Unknown'}</span>
               </div>
             </Row>
             <Row label="Domain">
-              <span style={{ fontSize: 13, fontWeight: 500 }}>{c.domain || 'General'}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-main)' }}>{c.domain || 'General'}</span>
             </Row>
             <div>
-              <Row label="Relevance Score" />
-              <div style={{ marginTop: 6 }}><ScoreBar score={score} /></div>
+              <Row label="Network Value Score" />
+              <div style={{ marginTop: 8 }}><ScoreBar score={score} /></div>
             </div>
             {(c.tags?.length > 0) && (
-              <div>
-                <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.5)', marginBottom: 6 }}>Tags</div>
-                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              <div style={{ marginTop: 8 }}>
+                <div className="contact-field-label">Attributes</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                   {c.tags.map(t => (
                     <span key={t} className={`tag ${TAG_CLASS[t] || 'tag-tech'}`}>{t}</span>
                   ))}
@@ -428,31 +334,19 @@ export default function ContactDrawer({
           </div>
         </Section>
 
-        {/* ── Why reach out ── */}
-        <Section title="Why Reach Out">
+        <Section title="Recommended Strategy">
           <OutreachReason connection={c} />
         </Section>
 
-        {/* Footer note */}
-        <div style={{ padding: '12px 20px 32px' }}>
-          <div style={{
-            background: 'rgba(10,102,194,0.05)', border: '1px solid rgba(10,102,194,0.15)',
-            borderRadius: 6, padding: '9px 12px', fontSize: 12, color: 'rgba(0,0,0,0.5)', lineHeight: 1.5,
-          }}>
-            <strong style={{ color: 'var(--li-blue)' }}>ℹ️ LinkedIn Privacy</strong><br/>
-            Phone, address, website and birthday require viewing the full LinkedIn profile.
-          </div>
-        </div>
       </aside>
     </>
   )
 }
 
-/* ── Small helper components ────────────────────────────────── */
 function Row({ label, children }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 24 }}>
-      <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.5)' }}>{label}</span>
+      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
       {children}
     </div>
   )
@@ -462,24 +356,24 @@ function OutreachReason({ connection: c }) {
   const age = parseConnectionAge(c.connected_on)
   const reasons = []
 
-  if (c.category === 'Recruiter/HR') reasons.push({ icon: '🎯', text: 'Recruiter — great for job leads & referrals' })
-  if (c.category === 'Founder/Entrepreneur') reasons.push({ icon: '🚀', text: 'Founder — potential collaboration or investment' })
+  if (c.category === 'Recruiter/HR') reasons.push({ icon: '🎯', text: 'Recruiter — ask about active mandates' })
+  if (c.category === 'Founder/Entrepreneur') reasons.push({ icon: '🚀', text: 'Founder — potential collaboration' })
   if (c.tags?.includes('Hiring Potential')) reasons.push({ icon: '💼', text: 'Likely hiring — ask about open roles' })
-  if (c.tags?.includes('High Value Connection')) reasons.push({ icon: '⭐', text: 'High-value — priority for networking' })
-  if (age && age.days <= 30) reasons.push({ icon: '🆕', text: 'Recently connected — perfect time to say hi' })
-  if (age && age.days >= 730) reasons.push({ icon: '💤', text: 'Haven\'t interacted in 2+ years — reconnect!' })
-  if (c.score > 0.8) reasons.push({ icon: '🔥', text: 'Top-ranked in your network — high priority' })
+  if (c.tags?.includes('High Value Connection')) reasons.push({ icon: '⭐', text: 'High-value connection — prioritize' })
+  if (age && age.days <= 30) reasons.push({ icon: '🆕', text: 'Recent connection — establish rapport' })
+  if (age && age.days >= 730) reasons.push({ icon: '💤', text: 'Dormant connection — time to reconnect' })
+  if (c.score > 0.8) reasons.push({ icon: '🔥', text: 'Top-tier rank — high priority' })
 
   if (reasons.length === 0) {
-    reasons.push({ icon: '🤝', text: 'Stay in touch — strong networks take consistency' })
+    reasons.push({ icon: '🤝', text: 'Maintain relationship — check in' })
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {reasons.map((r, i) => (
-        <div key={i} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, color: 'rgba(0,0,0,0.7)' }}>
-          <span style={{ fontSize: 15, flexShrink: 0 }}>{r.icon}</span>
-          <span style={{ lineHeight: 1.45 }}>{r.text}</span>
+        <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: 13, color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: 16, flexShrink: 0, opacity: 0.8 }}>{r.icon}</span>
+          <span style={{ lineHeight: 1.5 }}>{r.text}</span>
         </div>
       ))}
     </div>
