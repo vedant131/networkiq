@@ -37,7 +37,7 @@ function UploadWidget({ onUpload, onRestore }) {
     try { await onUpload(file, phone.trim()) } finally { setBusy(false) }
   }
 
-  if (step === 1) return (
+  const renderStep1 = () => (
     <div className="flex flex-col gap-4">
       {/* Option cards */}
       <div className="grid grid-cols-2 gap-3">
@@ -60,16 +60,15 @@ function UploadWidget({ onUpload, onRestore }) {
         onClick={() => ref.current?.click()}
         onDragOver={e => { e.preventDefault(); setDrag(true) }}
         onDragLeave={() => setDrag(false)}
-        onDrop={e => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]) }}
-        className="rounded-2xl p-10 text-center cursor-pointer transition-all duration-200"
-        style={{ border: `2px dashed ${drag ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)'}`, background: drag ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)' }}
+        onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) pick(f) }}
+        className="rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all"
+        style={{ background: drag ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', border: `2px dashed ${drag ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)'}` }}
       >
-        <Upload size={32} className="mx-auto mb-3 text-white/40" />
-        <div className="text-white font-medium text-sm mb-1">{drag ? 'Release to upload' : 'Drop your LinkedIn ZIP or CSV'}</div>
-        <div className="text-white/30 text-xs mb-5">Complete_LinkedInDataExport_*.zip or Connections.csv</div>
-        <button onClick={e => { e.stopPropagation(); ref.current?.click() }}
-          className="liquid-glass rounded-full px-6 py-2 text-white text-sm hover:scale-[1.03] transition-transform">
-          Choose File
+        <div className="text-3xl mb-3">{drag ? '📂' : '📁'}</div>
+        <div className="text-white font-semibold text-sm mb-1">{drag ? 'Release to upload' : 'Drop your LinkedIn ZIP or CSV here'}</div>
+        <div className="text-white/40 text-[11px] mb-4">Accepts: Complete_LinkedInDataExport_*.zip or Connections.csv</div>
+        <button className="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold py-2 px-5 rounded-full transition-colors border border-white/10">
+          📎 Choose File
         </button>
         <input ref={ref} type="file" accept=".csv,.zip" hidden onChange={e => { if (e.target.files[0]) pick(e.target.files[0]) }} />
       </div>
@@ -110,65 +109,6 @@ function UploadWidget({ onUpload, onRestore }) {
       </button>
     </div>
   )
-
-  const renderUploadFlow = () => (
-    <div className="flex flex-col gap-4">
-      {/* File confirmed */}
-      <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)' }}>
-        <Check size={18} className="text-emerald-400 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <div className="text-emerald-400 text-xs font-semibold">File ready</div>
-          <div className="text-white/50 text-[11px] truncate">{file?.name}</div>
-        </div>
-        <button onClick={() => { setFile(null); setStep(1) }} className="text-white/30 hover:text-white/60 text-xs transition-colors">✕ Change</button>
-      </div>
-
-      {/* Activation reminder */}
-      <div className="rounded-xl p-4" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)' }}>
-        <p className="text-amber-400 text-xs font-semibold mb-1">⚠️ Activate the bot first</p>
-        <p className="text-white/50 text-[11px] leading-relaxed">
-          From WhatsApp, text <span className="font-mono text-emerald-400 font-bold">{WA_CMD}</span> to <strong className="text-white">{WA_NUM}</strong> before uploading.
-        </p>
-        <a href={WA_LINK} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
-          Open WhatsApp <ArrowRight size={10} />
-        </a>
-      </div>
-
-      {/* Phone */}
-      <div>
-        <label className="text-white/50 text-xs font-medium block mb-2">WhatsApp Number (with country code)</label>
-        <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
-          placeholder="+91 98765 43210"
-          className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
-          style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
-          onKeyDown={e => e.key === 'Enter' && submit()}
-        />
-        {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
-      </div>
-
-      {/* After connecting tips */}
-      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-white/40 text-[10px] font-semibold mb-2 uppercase tracking-wider">After connecting, try:</p>
-        {['"find recruiters at Google"', '"Enrich Priya Sharma"', '"stats"', '"who works at Stripe"'].map(c => (
-          <div key={c} className="text-white/40 text-[11px] font-mono py-1 border-b border-white/5 last:border-0">{c}</div>
-        ))}
-      </div>
-
-      <div className="flex gap-2">
-        <button onClick={submit} disabled={busy}
-          className="flex-1 liquid-glass rounded-xl py-3.5 text-white text-sm font-semibold hover:scale-[1.02] transition-transform disabled:opacity-60">
-          {busy ? '⏳ Uploading…' : '🚀 Upload & Connect WhatsApp'}
-        </button>
-        <button onClick={() => onUpload(file, '')}
-          className="rounded-xl px-4 text-white/40 text-sm hover:text-white/70 transition-colors"
-          style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
-          Skip
-        </button>
-      </div>
-    </div>
-  )
-
   return (
     <div className="flex flex-col">
       {/* Tabs */}
