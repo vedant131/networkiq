@@ -109,6 +109,67 @@ function UploadWidget({ onUpload, onRestore }) {
       </button>
     </div>
   )
+
+  const renderUploadFlow = () => {
+    if (step === 1) return renderStep1();
+    return (
+      <div className="flex flex-col gap-4">
+        {/* File confirmed */}
+        <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)' }}>
+          <div className="text-emerald-400 text-lg">✓</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-emerald-400 text-xs font-semibold mb-0.5">File ready</div>
+            <div className="text-white/50 text-[11px] truncate">{file?.name}</div>
+          </div>
+          <button onClick={() => { setFile(null); setStep(1) }} className="text-white/30 hover:text-white/60 text-xs transition-colors">✕ Change</button>
+        </div>
+
+        {/* Activation reminder */}
+        <div className="rounded-xl p-4" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)' }}>
+          <p className="text-amber-400 text-xs font-semibold mb-1">⚠️ Activate the bot first</p>
+          <p className="text-white/50 text-[11px] leading-relaxed">
+            From WhatsApp, text <span className="font-mono text-emerald-400 font-bold">{WA_CMD}</span> to <strong className="text-white">{WA_NUM}</strong> before uploading.
+          </p>
+          <a href={WA_LINK} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
+            Open WhatsApp
+          </a>
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label className="text-white/50 text-xs font-medium block mb-2">WhatsApp Number (with country code)</label>
+          <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
+            placeholder="+91 98765 43210"
+            className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
+            style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
+            onKeyDown={e => e.key === 'Enter' && submit()}
+          />
+          {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
+        </div>
+
+        {/* After connecting tips */}
+        <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <p className="text-white/40 text-[10px] font-semibold mb-2 uppercase tracking-wider">After connecting, try:</p>
+          {['"find recruiters at Google"', '"Enrich Priya Sharma"', '"stats"', '"who works at Stripe"'].map(c => (
+            <div key={c} className="text-white/40 text-[11px] font-mono py-1 border-b border-white/5 last:border-0">{c}</div>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={submit} disabled={busy}
+            className="flex-1 liquid-glass rounded-xl py-3.5 text-white text-sm font-semibold hover:scale-[1.02] transition-transform disabled:opacity-60">
+            {busy ? '⏳ Uploading…' : '🚀 Upload & Connect WhatsApp'}
+          </button>
+          <button onClick={() => onUpload(file, '')}
+            className="rounded-xl px-4 text-white/40 text-sm hover:text-white/70 transition-colors"
+            style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+            Skip
+          </button>
+        </div>
+      </div>
+    );
+  };
   return (
     <div className="flex flex-col">
       {/* Tabs */}
