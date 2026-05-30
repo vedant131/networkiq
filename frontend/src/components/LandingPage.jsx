@@ -11,7 +11,8 @@ const QR_URL   = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=
 const DISPLAY  = "'Instrument Serif', serif"
 
 /* ─── UPLOAD WIDGET (dark, standalone) ───────────────────────────────────── */
-function UploadWidget({ onUpload }) {
+function UploadWidget({ onUpload, onRestore }) {
+  const [tab, setTab]       = useState('upload') // 'upload' | 'restore'
   const [step, setStep]     = useState(1)
   const [file, setFile]     = useState(null)
   const [phone, setPhone]   = useState('')
@@ -72,11 +73,46 @@ function UploadWidget({ onUpload }) {
         </button>
         <input ref={ref} type="file" accept=".csv,.zip" hidden onChange={e => { if (e.target.files[0]) pick(e.target.files[0]) }} />
       </div>
-      <p className="text-white/25 text-[11px] text-center">🔒 Private &amp; secure — never sold or shared</p>
+      </div>
+      <p className="text-white/25 text-[11px] text-center mt-4">🔒 Private &amp; secure — never sold or shared</p>
     </div>
   )
 
-  return (
+  const renderRestoreTab = () => (
+    <div className="flex flex-col gap-5 text-center py-6">
+      <div className="text-4xl mb-2">📱</div>
+      <h3 className="text-white font-semibold text-lg">Welcome Back!</h3>
+      <p className="text-white/50 text-sm leading-relaxed max-w-sm mx-auto">
+        Enter the WhatsApp number you used previously to instantly restore your dashboard.
+      </p>
+      <div className="mt-2 text-left">
+        <label className="text-white/50 text-xs font-medium block mb-2">WhatsApp Number</label>
+        <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
+          placeholder="+91 98765 43210"
+          className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
+          style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              const d = phone.replace(/\D/g, '')
+              if (d.length < 10) setErr('Enter a valid number with country code')
+              else onRestore(phone.trim())
+            }
+          }}
+        />
+        {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
+      </div>
+      <button onClick={() => {
+        const d = phone.replace(/\D/g, '')
+        if (d.length < 10) { setErr('Enter a valid number with country code'); return }
+        onRestore(phone.trim())
+      }} disabled={busy}
+        className="liquid-glass rounded-xl py-3.5 text-white text-sm font-semibold hover:scale-[1.02] transition-transform disabled:opacity-60 w-full mt-2">
+        {busy ? '⏳ Restoring…' : '🔄 Restore My Network'}
+      </button>
+    </div>
+  )
+
+  const renderUploadFlow = () => (
     <div className="flex flex-col gap-4">
       {/* File confirmed */}
       <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)' }}>
@@ -133,6 +169,34 @@ function UploadWidget({ onUpload }) {
       </div>
     </div>
   )
+
+  return (
+    <div className="flex flex-col">
+      {/* Tabs */}
+      <div className="flex border-b mb-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <button onClick={() => setTab('upload')}
+          className="flex-1 py-3 text-sm transition-colors"
+          style={{ 
+            color: tab === 'upload' ? '#fff' : 'rgba(255,255,255,0.4)', 
+            borderBottom: tab === 'upload' ? '2px solid #34d399' : '2px solid transparent',
+            fontWeight: tab === 'upload' ? 600 : 400
+          }}>
+          🚀 New Upload
+        </button>
+        <button onClick={() => setTab('restore')}
+          className="flex-1 py-3 text-sm transition-colors"
+          style={{ 
+            color: tab === 'restore' ? '#fff' : 'rgba(255,255,255,0.4)', 
+            borderBottom: tab === 'restore' ? '2px solid #34d399' : '2px solid transparent',
+            fontWeight: tab === 'restore' ? 600 : 400
+          }}>
+          📱 Returning User
+        </button>
+      </div>
+
+      {tab === 'restore' ? renderRestoreTab() : renderUploadFlow()}
+    </div>
+  )
 }
 
 /* ─── STEP CARD ──────────────────────────────────────────────────────────── */
@@ -186,7 +250,7 @@ function FeatureRow({ items }) {
 }
 
 /* ─── MAIN COMPONENT ─────────────────────────────────────────────────────── */
-export default function LandingPage({ onUpload }) {
+export default function LandingPage({ onUpload, onRestore, onShowUpload }) {
   const [copied, setCopied] = useState(null)
   const [qrLoaded, setQrLoaded] = useState(false)
 
@@ -316,7 +380,7 @@ export default function LandingPage({ onUpload }) {
                 <div className="text-white/45 text-sm mt-1">Upload your LinkedIn data, then link your WhatsApp</div>
               </div>
               <div className="p-6" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                <UploadWidget onUpload={onUpload} />
+                <UploadWidget onUpload={onUpload} onRestore={onRestore} />
               </div>
             </div>
 
