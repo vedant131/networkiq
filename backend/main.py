@@ -7,10 +7,13 @@ from collections import Counter
 from typing import Optional
 
 import pandas as pd
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, PlainTextResponse
+from fastapi.responses import StreamingResponse, PlainTextResponse, JSONResponse
 import io
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from config import settings
 from models.schemas import QueryRequest, MessageRequest, ExportRequest, MatchRequest
@@ -26,6 +29,10 @@ from whatsapp_bot import handle_message
 
 app = FastAPI(title="LinkedIn Network Intelligence API", version="1.0.0")
 
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 @app.on_event("startup")
 def startup_event():
@@ -35,16 +42,20 @@ def startup_event():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://vedant131.github.io",
-    ],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 # ── In-memory session store ────────────────────────────────────────────────────
 _sessions: dict[str, pd.DataFrame] = {}
@@ -116,13 +127,20 @@ def _compute_insights(df: pd.DataFrame) -> dict:
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"[ERROR] Unhandled exception: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "ai_mode": settings.ai_mode, "version": "1.0.0"}
 
 
 @app.post("/api/upload")
+@limiter.limit("5/minute")
 async def upload(
+    request: Request,
     file: UploadFile = File(...),
     phone: Optional[str] = Form(None),   # WhatsApp number, e.g. +919XXXXXXXXX
 ):
@@ -143,6 +161,9 @@ async def upload(
         raise HTTPException(400, "Please upload either the Connections.csv file OR the full LinkedIn data export ZIP.")
 
     content     = await file.read()
+    if len(content) > 25 * 1024 * 1024:
+        raise HTTPException(400, "File size exceeds 25MB limit.")
+        
     found_files = {}
 
     try:
@@ -158,7 +179,8 @@ async def upload(
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     except Exception as exc:
-        raise HTTPException(500, f"Processing error: {exc}")
+        print(f"[upload] Processing error: {exc}")
+        raise HTTPException(500, "Internal server error during processing.")
 
     session_id = str(uuid.uuid4())
     _sessions[session_id] = df
@@ -208,7 +230,8 @@ def _send_whatsapp_welcome(phone: str, total: int, df_summary: dict):
 
 
 @app.post("/api/query")
-async def query_network(req: QueryRequest):
+@limiter.limit("60/minute")
+async def query_network(request: Request, req: QueryRequest):
     """Natural-language search over a processed network."""
     df = _sessions.get(req.session_id)
     if df is None:
@@ -219,7 +242,8 @@ async def query_network(req: QueryRequest):
 
 
 @app.post("/api/export")
-async def export_excel(req: ExportRequest):
+@limiter.limit("60/minute")
+async def export_excel(request: Request, req: ExportRequest):
     """Stream a .xlsx file for the processed network."""
     df = _sessions.get(req.session_id)
     if df is None:
@@ -234,7 +258,8 @@ async def export_excel(req: ExportRequest):
 
 
 @app.post("/api/message")
-async def generate_message(req: MessageRequest):
+@limiter.limit("10/minute")
+async def generate_message(request: Request, req: MessageRequest):
     """Generate an AI-powered outreach message for a specific connection."""
     df = _sessions.get(req.session_id)
     if df is None:
@@ -265,6 +290,7 @@ Return only the message text. No greeting prefix."""
                 model=settings.openai_model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
+                max_tokens=200,
             )
             message = res.choices[0].message.content.strip()
             return {"message": message, "mode": "ai"}
@@ -283,7 +309,8 @@ Return only the message text. No greeting prefix."""
 
 
 @app.post("/api/match_profile")
-async def match_profile(req: MatchRequest):
+@limiter.limit("10/minute")
+async def match_profile(request: Request, req: MatchRequest):
     """Analyze user's profile/resume and recommend the best contacts to reach out to."""
     df = _sessions.get(req.session_id)
     if df is None:
@@ -303,6 +330,7 @@ Input: {req.profile_text}"""
                 model=settings.openai_model,
                 messages=[{"role": "user", "content": profile_prompt}],
                 temperature=0.3,
+                max_tokens=100,
             )
             user_summary = prof_res.choices[0].message.content.strip()
 
@@ -334,6 +362,7 @@ No markdown formatting, just raw JSON."""
                 model=settings.openai_model,
                 messages=[{"role": "user", "content": match_prompt}],
                 temperature=0.3,
+                max_tokens=500,
             )
             raw_json = match_res.choices[0].message.content.strip()
             if raw_json.startswith("```json"):

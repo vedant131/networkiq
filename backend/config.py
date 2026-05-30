@@ -20,6 +20,14 @@ class Settings:
     # Production:     whatsapp:+1XXXXXXXXXX (your bought number)
     twilio_whatsapp_from:  str = os.getenv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
     website_url:           str = os.getenv("WEBSITE_URL", "http://localhost:3000")
+    
+    # ── Security ───────────────────────────────────────────────────────────────
+    allowed_origins: list[str] = [
+        origin.strip() for origin in os.getenv(
+            "ALLOWED_ORIGINS", 
+            "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,https://vedant131.github.io"
+        ).split(",") if origin.strip()
+    ]
 
     # ── Contact Enrichment (Waterfall) ─────────────────────────────────────────
     hunter_api_key:        str = os.getenv("HUNTER_API_KEY", "")
