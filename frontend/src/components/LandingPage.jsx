@@ -73,7 +73,6 @@ function UploadWidget({ onUpload, onRestore }) {
         </button>
         <input ref={ref} type="file" accept=".csv,.zip" hidden onChange={e => { if (e.target.files[0]) pick(e.target.files[0]) }} />
       </div>
-      </div>
       <p className="text-white/25 text-[11px] text-center mt-4">🔒 Private &amp; secure — never sold or shared</p>
     </div>
   )
