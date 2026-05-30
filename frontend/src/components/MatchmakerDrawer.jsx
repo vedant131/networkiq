@@ -15,6 +15,7 @@ export default function MatchmakerDrawer({ sessionId, onClose, onMessage }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [expanded, setExpanded] = useState({})
 
   const handleMatch = async () => {
     const text = profileText.trim()
@@ -147,44 +148,70 @@ export default function MatchmakerDrawer({ sessionId, onClose, onMessage }) {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{c.full_name}</div>
                         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                          {c.job_title_clean} {c.company && `at ${c.company}`}
+                          {c.job_title_clean} {c.company && <span>at <strong style={{ color: 'var(--accent-emerald)', fontWeight: 600 }}>{c.company}</strong></span>}
+                        </div>
+                        {c.linkedin_url && (
+                          <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--accent-blue)', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                            <i className="fi fi-rr-linkedin"></i> View LinkedIn
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {expanded[i] ? (
+                      <div className="anim-in">
+                        <div style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          borderRadius: 8, padding: 12, marginBottom: 12,
+                          borderLeft: '2px solid var(--accent-emerald)'
+                        }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                            Why Them?
+                          </div>
+                          <div style={{ fontSize: 13, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                            {c.reason}
+                          </div>
+                        </div>
+
+                        <div style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          borderRadius: 8, padding: 12, marginBottom: 16,
+                          borderLeft: '2px solid var(--accent-blue)'
+                        }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                            Suggested Icebreaker
+                          </div>
+                          <div style={{ fontSize: 13, color: 'var(--text-main)', fontStyle: 'italic', lineHeight: 1.4 }}>
+                            "{c.icebreaker}"
+                          </div>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button 
+                            className="btn btn-outline w-full" 
+                            onClick={() => onMessage(c)}
+                            style={{ justifyContent: 'center' }}
+                          >
+                            <i className="fi fi-rr-envelope"></i> Draft Message
+                          </button>
+                          <button 
+                            className="btn btn-ghost"
+                            onClick={() => setExpanded({ ...expanded, [i]: false })}
+                            style={{ padding: '0 12px' }}
+                          >
+                            <i className="fi fi-rr-angle-up"></i>
+                          </button>
                         </div>
                       </div>
-                    </div>
-
-                    <div style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      borderRadius: 8, padding: 12, marginBottom: 12,
-                      borderLeft: '2px solid var(--accent-emerald)'
-                    }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                        Why Them?
-                      </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-main)', lineHeight: 1.4 }}>
-                        {c.reason}
-                      </div>
-                    </div>
-
-                    <div style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      borderRadius: 8, padding: 12, marginBottom: 16,
-                      borderLeft: '2px solid var(--accent-blue)'
-                    }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                        Suggested Icebreaker
-                      </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-main)', fontStyle: 'italic', lineHeight: 1.4 }}>
-                        "{c.icebreaker}"
-                      </div>
-                    </div>
-
-                    <button 
-                      className="btn btn-outline w-full" 
-                      onClick={() => onMessage(c)}
-                      style={{ justifyContent: 'center' }}
-                    >
-                      ✉️ Draft Message
-                    </button>
+                    ) : (
+                      <button 
+                        className="btn btn-outline w-full" 
+                        onClick={() => setExpanded({ ...expanded, [i]: true })}
+                        style={{ justifyContent: 'center' }}
+                      >
+                        <i className="fi fi-rr-sparkles"></i> Why Them & Draft Message
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

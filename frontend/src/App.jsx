@@ -88,10 +88,11 @@ export default function App() {
     } catch (e) { alert(`Error: ${e.message}`); setView('upload') }
   }, [])
 
-  const handleRestore = useCallback(async (phone) => {
-    setView('processing'); setProcessingMsg('Restoring your network…')
+  const handleRestore = useCallback(async (phone, otp) => {
+    setView('processing'); setProcessingMsg('Unlocking your dashboard…')
     const form = new FormData()
     form.append('phone', phone)
+    if (otp) form.append('otp', otp)
     try {
       const res = await fetch(apiUrl('/api/restore'), { method: 'POST', body: form })
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Restore failed') }
@@ -149,7 +150,14 @@ export default function App() {
   /* ─────────────── VIEWS ─────────────── */
   if (view === 'upload') return (
     <div style={{ background: 'var(--bg-dark)', minHeight: '100vh' }}>
-      <LandingPage onUpload={handleUpload} onRestore={handleRestore} onShowUpload={() => setView('upload-form')} />
+        <LandingPage 
+          onUpload={handleUpload} 
+          onRestore={handleRestore} 
+          apiUrl={apiUrl}
+          WA_CMD="hello" 
+          WA_NUM="+14155238886" 
+          WA_LINK="https://wa.me/14155238886?text=hello" 
+        />
     </div>
   )
 

@@ -11,14 +11,16 @@ const QR_URL   = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=
 const DISPLAY  = "'Instrument Serif', serif"
 
 /* ─── UPLOAD WIDGET (dark, standalone) ───────────────────────────────────── */
-function UploadWidget({ onUpload, onRestore }) {
+function UploadWidget({ onUpload, onRestore, apiUrl }) {
   const [tab, setTab]       = useState('upload') // 'upload' | 'restore'
   const [step, setStep]     = useState(1)
   const [file, setFile]     = useState(null)
   const [phone, setPhone]   = useState('')
+  const [otp, setOtp]       = useState('')
   const [drag, setDrag]     = useState(false)
   const [err, setErr]       = useState('')
   const [busy, setBusy]     = useState(false)
+  const [otpStep, setOtpStep] = useState(false)
   const ref = useRef()
 
   const pick = (f) => {
@@ -35,6 +37,27 @@ function UploadWidget({ onUpload, onRestore }) {
     if (d.length < 10) { setErr('Enter a valid number with country code (min 10 digits)'); return }
     setErr(''); setBusy(true)
     try { await onUpload(file, phone.trim()) } finally { setBusy(false) }
+  }
+
+  const handleRequestOtp = async () => {
+    const d = phone.replace(/\D/g, '')
+    if (d.length < 10) { setErr('Enter a valid number with country code'); return }
+    setBusy(true)
+    try {
+      const form = new FormData()
+      form.append('phone', phone.trim())
+      const res = await fetch(apiUrl('/api/auth/request-otp'), { method: 'POST', body: form })
+      if (!res.ok) {
+        const e = await res.json()
+        throw new Error(e.detail || 'Failed to send OTP')
+      }
+      setOtpStep(true)
+      setErr('')
+    } catch (e) {
+      setErr(e.message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   const renderStep1 = () => (
@@ -81,32 +104,49 @@ function UploadWidget({ onUpload, onRestore }) {
       <div className="text-4xl mb-2">📱</div>
       <h3 className="text-white font-semibold text-lg">Welcome Back!</h3>
       <p className="text-white/50 text-sm leading-relaxed max-w-sm mx-auto">
-        Enter the WhatsApp number you used previously to instantly restore your dashboard.
+        {otpStep 
+          ? "Enter the 6-digit security code we just sent to your WhatsApp." 
+          : "Enter the WhatsApp number you used previously to instantly restore your dashboard."}
       </p>
-      <div className="mt-2 text-left">
-        <label className="text-white/50 text-xs font-medium block mb-2">WhatsApp Number</label>
-        <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
-          placeholder="+91 98765 43210"
-          className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
-          style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              const d = phone.replace(/\D/g, '')
-              if (d.length < 10) setErr('Enter a valid number with country code')
-              else onRestore(phone.trim())
-            }
-          }}
-        />
-        {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
-      </div>
-      <button onClick={() => {
-        const d = phone.replace(/\D/g, '')
-        if (d.length < 10) { setErr('Enter a valid number with country code'); return }
-        onRestore(phone.trim())
-      }} disabled={busy}
-        className="liquid-glass rounded-xl py-3.5 text-white text-sm font-semibold hover:scale-[1.02] transition-transform disabled:opacity-60 w-full mt-2">
-        {busy ? '⏳ Restoring…' : '🔄 Restore My Network'}
-      </button>
+      
+      {!otpStep ? (
+        <>
+          <div className="mt-2 text-left">
+            <label className="text-white/50 text-xs font-medium block mb-2">WhatsApp Number</label>
+            <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
+              placeholder="+91 98765 43210"
+              className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
+              onKeyDown={e => { if (e.key === 'Enter') handleRequestOtp() }}
+            />
+            {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
+          </div>
+          <button onClick={handleRequestOtp} disabled={busy}
+            className="liquid-glass rounded-xl py-3.5 text-white text-sm font-semibold hover:scale-[1.02] transition-transform disabled:opacity-60 w-full mt-2">
+            {busy ? '⏳ Sending Code…' : 'Send OTP via WhatsApp'}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="mt-2 text-left">
+            <label className="text-white/50 text-xs font-medium block mb-2">6-Digit OTP</label>
+            <input type="text" value={otp} onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setErr('') }}
+              placeholder="123456"
+              className="w-full rounded-xl px-4 py-3 text-center text-xl tracking-[0.5em] text-white placeholder-white/20 outline-none transition-all font-mono"
+              style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
+              onKeyDown={e => { if (e.key === 'Enter' && otp.length === 6) onRestore(phone.trim(), otp) }}
+            />
+            {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
+          </div>
+          <button onClick={() => { if (otp.length !== 6) setErr('Enter a 6-digit code'); else onRestore(phone.trim(), otp) }} disabled={busy || otp.length < 6}
+            className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 rounded-xl py-3.5 text-sm font-semibold hover:scale-[1.02] transition-all disabled:opacity-60 w-full mt-2">
+            {busy ? 'Unlocking…' : 'Unlock Dashboard'}
+          </button>
+          <button onClick={() => { setOtpStep(false); setOtp(''); setErr(''); }} className="text-white/40 text-xs hover:text-white mt-2 transition-colors">
+            ← Change Number
+          </button>
+        </>
+      )}
     </div>
   )
 

@@ -3,6 +3,7 @@ FastAPI application — LinkedIn Network Intelligence API
 """
 import uuid
 import json
+import random
 from collections import Counter
 from typing import Optional
 
@@ -59,6 +60,7 @@ async def security_headers(request: Request, call_next):
 
 # ── In-memory session store ────────────────────────────────────────────────────
 _sessions: dict[str, pd.DataFrame] = {}
+_otps: dict[str, str] = {}
 
 
 def _df_to_connections(df: pd.DataFrame) -> list[dict]:
@@ -212,14 +214,14 @@ async def upload(
         "whatsapp_linked": whatsapp_linked,
     }
 
-@app.post("/api/restore")
+@app.post("/api/auth/request-otp")
 @limiter.limit("5/minute")
-async def restore_session(
+async def request_otp(
     request: Request,
-    phone: str = Form(...),
+    phone: str = Form(...)
 ):
     """
-    Restore an existing user's data using their phone number.
+    Request a 6-digit OTP via WhatsApp for returning users.
     """
     clean_phone = phone.strip().replace(" ", "")
     if not clean_phone.startswith("+"):
@@ -228,6 +230,53 @@ async def restore_session(
     df = db.load_user_data(clean_phone)
     if df is None:
         raise HTTPException(404, "No existing data found for this phone number.")
+        
+    otp_code = str(random.randint(100000, 999999))
+    _otps[clean_phone] = otp_code
+    
+    # Send via Twilio
+    if settings.twilio_account_sid and settings.twilio_auth_token:
+        try:
+            from twilio.rest import Client
+            client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
+            client.messages.create(
+                from_=settings.twilio_whatsapp_from,
+                to=f"whatsapp:{clean_phone}",
+                body=f"Your NetWorkIQ security code is: *{otp_code}*",
+            )
+            print(f"[whatsapp] OTP sent to {clean_phone}")
+        except Exception as e:
+            print(f"[whatsapp] Failed to send OTP: {e}")
+    else:
+        print(f"\\n{'='*40}\\n[DEBUG] Twilio not configured.\\nOTP for {clean_phone} is: {otp_code}\\n{'='*40}\\n")
+        
+    return {"success": True}
+
+@app.post("/api/restore")
+@limiter.limit("5/minute")
+async def restore_session(
+    request: Request,
+    phone: str = Form(...),
+    otp: str = Form(...)
+):
+    """
+    Restore an existing user's data using their phone number and OTP.
+    """
+    clean_phone = phone.strip().replace(" ", "")
+    if not clean_phone.startswith("+"):
+        clean_phone = "+" + clean_phone
+        
+    # Verify OTP
+    stored_otp = _otps.get(clean_phone)
+    if not stored_otp or stored_otp != otp.strip():
+        raise HTTPException(401, "Invalid or expired OTP.")
+        
+    df = db.load_user_data(clean_phone)
+    if df is None:
+        raise HTTPException(404, "No existing data found for this phone number.")
+        
+    # Clear OTP after successful use
+    del _otps[clean_phone]
         
     session_id = str(uuid.uuid4())
     _sessions[session_id] = df
@@ -396,7 +445,7 @@ Input: {req.profile_text}"""
 Here is a JSON list of top people in their network:
 {json.dumps(contacts_json)}
 
-Task: Identify exactly 3 to 5 people from this list who would be the BEST people for the user to reach out to (e.g., recruiters for their role, founders building in their space, senior people for mentorship).
+Task: Identify exactly 5 people from this list who would be the BEST people for the user to reach out to (e.g., recruiters for their role, founders building in their space, senior people for mentorship).
 
 Return ONLY a valid JSON array of objects, with each object having exactly these keys:
 - "id": the integer id of the connection
@@ -434,6 +483,7 @@ No markdown formatting, just raw JSON."""
                         "full_name": str(row.get("full_name", "")),
                         "job_title_clean": str(row.get("position_clean", "")),
                         "company": str(row.get("company_clean", "")),
+                        "linkedin_url": str(row.get("linkedin_url", "")),
                         "category": str(row.get("category", "Other")),
                         "seniority": str(row.get("seniority", "Unknown")),
                         "tags": tags if isinstance(tags, list) else [],

@@ -6,7 +6,8 @@
 /* ═══ FONT VARIABLES ══════════════════════════════════════════════ */
 :root {
   --font-display: 'Instrument Serif', serif;
-  --font-body: 'Almarai', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'Space Grotesk', sans-serif;
   
   /* ── Dark Cinematic Palette ──────────────────────────────────── */
   --bg-dark:         #000000;
@@ -44,7 +45,7 @@ body {
 
 /* ═══ GLOBAL FONT OVERRIDE ══════════════════════════════════════════ */
 * {
-  font-family: 'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────── */
@@ -52,7 +53,7 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-dark); }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 99px; }
 
-.mono { font-family: 'Courier New', monospace; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .w-full { width: 100%; }
 
