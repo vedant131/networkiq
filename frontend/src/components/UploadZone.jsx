@@ -263,7 +263,7 @@ export default function UploadZone({ onUpload, onRestore }) {
           </div>
 
           <div style={{
-            display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)',
+            display: tab === 'upload' && step > 1 ? 'none' : 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)',
             background: '#fafafa',
           }}>
             <button

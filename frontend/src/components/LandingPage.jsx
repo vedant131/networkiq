@@ -172,26 +172,28 @@ function UploadWidget({ onUpload, onRestore }) {
   return (
     <div className="flex flex-col">
       {/* Tabs */}
-      <div className="flex border-b mb-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-        <button onClick={() => setTab('upload')}
-          className="flex-1 py-3 text-sm transition-colors"
-          style={{ 
-            color: tab === 'upload' ? '#fff' : 'rgba(255,255,255,0.4)', 
-            borderBottom: tab === 'upload' ? '2px solid #34d399' : '2px solid transparent',
-            fontWeight: tab === 'upload' ? 600 : 400
-          }}>
-          🚀 New Upload
-        </button>
-        <button onClick={() => setTab('restore')}
-          className="flex-1 py-3 text-sm transition-colors"
-          style={{ 
-            color: tab === 'restore' ? '#fff' : 'rgba(255,255,255,0.4)', 
-            borderBottom: tab === 'restore' ? '2px solid #34d399' : '2px solid transparent',
-            fontWeight: tab === 'restore' ? 600 : 400
-          }}>
-          📱 Returning User
-        </button>
-      </div>
+      {step === 1 && (
+        <div className="flex border-b mb-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <button onClick={() => setTab('upload')}
+            className="flex-1 py-3 text-sm transition-colors"
+            style={{ 
+              color: tab === 'upload' ? '#fff' : 'rgba(255,255,255,0.4)', 
+              borderBottom: tab === 'upload' ? '2px solid #34d399' : '2px solid transparent',
+              fontWeight: tab === 'upload' ? 600 : 400
+            }}>
+            🚀 New Upload
+          </button>
+          <button onClick={() => setTab('restore')}
+            className="flex-1 py-3 text-sm transition-colors"
+            style={{ 
+              color: tab === 'restore' ? '#fff' : 'rgba(255,255,255,0.4)', 
+              borderBottom: tab === 'restore' ? '2px solid #34d399' : '2px solid transparent',
+              fontWeight: tab === 'restore' ? 600 : 400
+            }}>
+            📱 Returning User
+          </button>
+        </div>
+      )}
 
       {tab === 'restore' ? renderRestoreTab() : renderUploadFlow()}
     </div>
