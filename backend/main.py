@@ -309,7 +309,15 @@ async def generate_message(request: Request, req: MessageRequest):
     if settings.ai_mode == "openai" and settings.openai_api_key:
         try:
             from openai import OpenAI
-            client = OpenAI(api_key=settings.openai_api_key)
+            client_args = {"api_key": settings.openai_api_key}
+            model_name = settings.openai_model
+            
+            if settings.openai_api_key.startswith("sk-poe"):
+                client_args["base_url"] = "https://api.poe.com/v1"
+                if model_name == "gpt-4o-mini":
+                    model_name = "GPT-4o-Mini"
+            
+            client = OpenAI(**client_args)
             prompt = f"""Write a short, professional LinkedIn connection message (max 120 words).
 Sender goal: {purpose}
 Recipient: {name}, {title} at {company}
@@ -317,7 +325,7 @@ Tone: Warm, genuine, not salesy. Reference their specific role naturally.
 Return only the message text. No greeting prefix."""
 
             res = client.chat.completions.create(
-                model=settings.openai_model,
+                model=model_name,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
                 max_tokens=200,
@@ -350,14 +358,22 @@ async def match_profile(request: Request, req: MatchRequest):
     if settings.ai_mode == "openai" and settings.openai_api_key:
         try:
             from openai import OpenAI
-            client = OpenAI(api_key=settings.openai_api_key)
+            client_args = {"api_key": settings.openai_api_key}
+            model_name = settings.openai_model
+            
+            if settings.openai_api_key.startswith("sk-poe"):
+                client_args["base_url"] = "https://api.poe.com/v1"
+                if model_name == "gpt-4o-mini":
+                    model_name = "GPT-4o-Mini"
+            
+            client = OpenAI(**client_args)
 
             profile_prompt = f"""Extract the core professional identity from this text (a resume or list of interests).
 Keep it very brief (1-2 sentences).
 Input: {req.profile_text}"""
             
             prof_res = client.chat.completions.create(
-                model=settings.openai_model,
+                model=model_name,
                 messages=[{"role": "user", "content": profile_prompt}],
                 temperature=0.3,
                 max_tokens=100,
@@ -389,7 +405,7 @@ Return ONLY a valid JSON array of objects, with each object having exactly these
 No markdown formatting, just raw JSON."""
 
             match_res = client.chat.completions.create(
-                model=settings.openai_model,
+                model=model_name,
                 messages=[{"role": "user", "content": match_prompt}],
                 temperature=0.3,
                 max_tokens=500,
