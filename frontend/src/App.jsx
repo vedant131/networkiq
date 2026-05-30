@@ -88,6 +88,26 @@ export default function App() {
     } catch (e) { alert(`Error: ${e.message}`); setView('upload') }
   }, [])
 
+  const handleRestore = useCallback(async (phone) => {
+    setView('processing'); setProcessingMsg('Restoring your network…')
+    const form = new FormData()
+    form.append('phone', phone)
+    try {
+      const res = await fetch(apiUrl('/api/restore'), { method: 'POST', body: form })
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Restore failed') }
+      const data = await res.json()
+      await new Promise(r => setTimeout(r, 200))
+      setSessionId(data.session_id); setConnections(data.connections)
+      setFiltered(data.connections); setInsights(data.insights)
+      setQueryLabel(`All ${data.total} connections`)
+      setFoundFiles(null)
+      setFileType('restored')
+      setWhatsappLinked(true)
+      setLinkedPhone(phone)
+      setView('dashboard')
+    } catch (e) { alert(`Error: ${e.message}`); setView('upload') }
+  }, [])
+
   const handleQuery = useCallback((query) => {
     if (!connections.length) return
     const { results, label } = searchConnections(connections, query)
@@ -129,7 +149,7 @@ export default function App() {
   /* ─────────────── VIEWS ─────────────── */
   if (view === 'upload') return (
     <div style={{ background: 'var(--bg-dark)', minHeight: '100vh' }}>
-      <LandingPage onUpload={handleUpload} onShowUpload={() => setView('upload-form')} />
+      <LandingPage onUpload={handleUpload} onRestore={handleRestore} onShowUpload={() => setView('upload-form')} />
     </div>
   )
 
@@ -137,7 +157,7 @@ export default function App() {
     <div className="bg-noise" style={{ minHeight: '100vh', background: '#050505', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <img src={import.meta.env.BASE_URL + 'logo.svg'} alt="NetWorkIQ" style={{ height: 44, marginBottom: 40, filter: 'brightness(1.2) drop-shadow(0 0 8px rgba(0,229,255,0.3))' }} />
       <div style={{ width: '100%', maxWidth: 540 }}>
-        <UploadZone onUpload={handleUpload} dark />
+        <UploadZone onUpload={handleUpload} onRestore={handleRestore} dark />
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 
-export default function UploadZone({ onUpload }) {
+export default function UploadZone({ onUpload, onRestore }) {
+  const [tab, setTab]               = useState('upload') // 'upload' or 'restore'
   const [isDragging, setDragging]   = useState(false)
   const [fileName, setFileName]     = useState(null)
   const [selectedFile, setSelected] = useState(null)
@@ -185,6 +186,58 @@ export default function UploadZone({ onUpload }) {
     </>
   )
 
+  const renderRestoreTab = () => (
+    <div className="anim-stagger-1" style={{ padding: '24px 0' }}>
+      <div style={{ marginBottom: 24, textAlign: 'center' }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--li-text)', marginBottom: 8 }}>Welcome Back!</h3>
+        <p style={{ fontSize: 14, color: 'var(--li-text-2)', maxWidth: 400, margin: '0 auto' }}>
+          Enter the phone number you used previously to instantly restore your dashboard and WhatsApp bot connection.
+        </p>
+      </div>
+
+      <div style={{ maxWidth: 360, margin: '0 auto' }}>
+        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--li-text)', display: 'block', marginBottom: 6 }}>
+          WhatsApp Number (with country code)
+        </label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={e => { setPhone(e.target.value); setPhoneError('') }}
+          placeholder="+91 98765 43210"
+          className="li-input"
+          style={{ width: '100%', fontSize: 15, boxSizing: 'border-box', marginBottom: phoneError ? 4 : 20 }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              const digits = phone.replace(/\D/g, '')
+              if (digits.length < 10) setPhoneError('Enter a valid phone number')
+              else onRestore(phone.trim())
+            }
+          }}
+        />
+        {phoneError && (
+          <div style={{ fontSize: 12, color: 'var(--li-red)', marginBottom: 20 }}>⚠️ {phoneError}</div>
+        )}
+
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            const digits = phone.replace(/\D/g, '')
+            if (digits.length < 10) {
+              setPhoneError('Enter a valid phone number')
+              return
+            }
+            onRestore(phone.trim())
+          }}
+          disabled={uploading}
+          style={{ width: '100%', padding: '12px', fontSize: 15 }}
+        >
+          {uploading ? '⏳ Restoring...' : '🔄 Restore My Network'}
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div style={{
       minHeight: 'calc(100vh - 52px)',
@@ -210,43 +263,73 @@ export default function UploadZone({ onUpload }) {
           </div>
 
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 0,
-            padding: '12px 28px', borderBottom: '1px solid rgba(0,0,0,0.08)',
+            display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)',
             background: '#fafafa',
           }}>
-            {['Choose File', 'Connect WhatsApp'].map((label, i) => {
-              const active = step === i + 1
-              const done = step > i + 1
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < 1 ? 1 : 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{
-                      width: 24, height: 24, borderRadius: '50%',
-                      background: done ? '#057642' : active ? '#0A66C2' : 'rgba(0,0,0,0.15)',
-                      color: '#fff', fontSize: 11, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      {done ? '✓' : i + 1}
-                    </div>
-                    <span style={{
-                      fontSize: 12, fontWeight: active ? 700 : 400,
-                      color: active ? '#0A66C2' : done ? '#057642' : 'var(--li-text-2)',
-                    }}>{label}</span>
-                  </div>
-                  {i < 1 && (
-                    <div style={{
-                      flex: 1, height: 1, margin: '0 12px',
-                      background: done ? '#057642' : 'rgba(0,0,0,0.12)',
-                    }}/>
-                  )}
-                </div>
-              )
-            })}
+            <button
+              onClick={() => setTab('upload')}
+              style={{
+                flex: 1, padding: '16px', border: 'none', background: tab === 'upload' ? '#fff' : 'transparent',
+                borderBottom: tab === 'upload' ? '2px solid var(--li-blue)' : '2px solid transparent',
+                color: tab === 'upload' ? 'var(--li-blue)' : 'var(--li-text-2)',
+                fontWeight: tab === 'upload' ? 600 : 400, fontSize: 14, cursor: 'pointer',
+              }}
+            >
+              🚀 New Upload
+            </button>
+            <button
+              onClick={() => setTab('restore')}
+              style={{
+                flex: 1, padding: '16px', border: 'none', background: tab === 'restore' ? '#fff' : 'transparent',
+                borderBottom: tab === 'restore' ? '2px solid var(--li-blue)' : '2px solid transparent',
+                color: tab === 'restore' ? 'var(--li-blue)' : 'var(--li-text-2)',
+                fontWeight: tab === 'restore' ? 600 : 400, fontSize: 14, cursor: 'pointer',
+              }}
+            >
+              📱 Returning User
+            </button>
           </div>
 
-          <div style={{ padding: '24px 28px' }}>
-            {step === 1 ? renderStep1() : renderStep2()}
+          {tab === 'upload' && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 0,
+              padding: '12px 28px', borderBottom: '1px solid rgba(0,0,0,0.08)',
+              background: '#fff',
+            }}>
+              {['Choose File', 'Connect WhatsApp'].map((label, i) => {
+                const active = step === i + 1
+                const done = step > i + 1
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < 1 ? 1 : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{
+                        width: 24, height: 24, borderRadius: '50%',
+                        background: done ? '#057642' : active ? '#0A66C2' : 'rgba(0,0,0,0.15)',
+                        color: '#fff', fontSize: 11, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        {done ? '✓' : i + 1}
+                      </div>
+                      <span style={{
+                        fontSize: 12, fontWeight: active ? 700 : 400,
+                        color: active ? '#0A66C2' : done ? '#057642' : 'var(--li-text-2)',
+                      }}>{label}</span>
+                    </div>
+                    {i < 1 && (
+                      <div style={{
+                        flex: 1, height: 1, margin: '0 12px',
+                        background: done ? '#057642' : 'rgba(0,0,0,0.12)',
+                      }}/>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <div style={{ padding: '24px 28px', background: '#fff' }}>
+            {tab === 'restore' ? renderRestoreTab() : (step === 1 ? renderStep1() : renderStep2())}
           </div>
 
           <div style={{

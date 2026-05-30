@@ -212,6 +212,36 @@ async def upload(
         "whatsapp_linked": whatsapp_linked,
     }
 
+@app.post("/api/restore")
+@limiter.limit("5/minute")
+async def restore_session(
+    request: Request,
+    phone: str = Form(...),
+):
+    """
+    Restore an existing user's data using their phone number.
+    """
+    clean_phone = phone.strip().replace(" ", "")
+    if not clean_phone.startswith("+"):
+        clean_phone = "+" + clean_phone
+        
+    df = db.load_user_data(clean_phone)
+    if df is None:
+        raise HTTPException(404, "No existing data found for this phone number.")
+        
+    session_id = str(uuid.uuid4())
+    _sessions[session_id] = df
+    
+    return {
+        "session_id":      session_id,
+        "connections":     _df_to_connections(df),
+        "insights":        _compute_insights(df),
+        "total":           len(df),
+        "found_files":     None,
+        "file_type":       "restored",
+        "whatsapp_linked": True,
+    }
+
 
 def _send_whatsapp_welcome(phone: str, total: int, df_summary: dict):
     """Send a Twilio WhatsApp welcome message to the user."""
