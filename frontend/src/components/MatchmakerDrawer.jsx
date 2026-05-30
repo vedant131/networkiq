@@ -17,7 +17,16 @@ export default function MatchmakerDrawer({ sessionId, onClose, onMessage }) {
   const [result, setResult] = useState(null)
 
   const handleMatch = async () => {
-    if (!profileText.trim()) return
+    const text = profileText.trim()
+    if (!text) return
+    
+    // UI/UX validation: prevent single-word or extremely short inputs
+    const wordCount = text.split(/\s+/).length
+    if (wordCount < 4) {
+      setError('Please provide a bit more detail about your background or goals (at least a few words) so we can find relevant matches.')
+      return
+    }
+
     setLoading(true)
     setError(null)
     setResult(null)
