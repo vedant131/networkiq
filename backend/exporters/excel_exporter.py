@@ -95,7 +95,12 @@ def build_excel(df: pd.DataFrame) -> bytes:
                         val = round(float(val), 2)
                     except (TypeError, ValueError):
                         val = 0.0
-                cell = ws.cell(row=r_idx, column=c_idx, value=str(val) if val is not None else "")
+                
+                val_str = str(val) if val is not None else ""
+                if val_str and val_str[0] in ('=', '+', '-', '@', '\t', '\r', '\n'):
+                    val_str = "'" + val_str
+
+                cell = ws.cell(row=r_idx, column=c_idx, value=val_str)
             except Exception:
                 cell = ws.cell(row=r_idx, column=c_idx, value="")
             cell.fill = row_fill

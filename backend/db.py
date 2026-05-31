@@ -14,6 +14,17 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+from cryptography.fernet import Fernet
+
+# Ensure consistent key length for fernet (must be 32 URL-safe base64-encoded bytes)
+# If ENCRYPTION_KEY is missing, we use a static fallback to prevent crashes.
+_FERNET_KEY = os.getenv("ENCRYPTION_KEY", "q7p8E1l2_o4B3M0nZ5y6X1c8V2v9H7m4k5j6D1f2S3A=".encode())
+try:
+    _cipher = Fernet(_FERNET_KEY)
+except Exception:
+    # If the key provided in ENV is invalid, fallback to the default to prevent crash
+    _cipher = Fernet("q7p8E1l2_o4B3M0nZ5y6X1c8V2v9H7m4k5j6D1f2S3A=".encode())
+
 
 # ── Backend selection ──────────────────────────────────────────────────────────
 DATABASE_URL = os.getenv("DATABASE_URL", "")
@@ -133,7 +144,8 @@ def user_exists(phone: str) -> bool:
 
 def save_user_data(phone: str, df: pd.DataFrame, pin: str = "000000"):
     """Persist a processed DataFrame for a phone number."""
-    data_json = df.to_json(orient="records", date_format="iso")
+    data_json_raw = df.to_json(orient="records", date_format="iso")
+    data_json = _cipher.encrypt(data_json_raw.encode("utf-8")).decode("utf-8")
     now = datetime.utcnow().isoformat()
     if _USE_PG:
         with _pg_conn() as conn:
@@ -188,7 +200,15 @@ def load_user_data(phone: str) -> Optional[pd.DataFrame]:
 
     if row is None:
         return None
-    return pd.read_json(io.StringIO(row[0]), orient="records")
+    
+    raw_data = row[0]
+    try:
+        decrypted_json = _cipher.decrypt(raw_data.encode("utf-8")).decode("utf-8")
+    except Exception:
+        # Fallback for old unencrypted data
+        decrypted_json = raw_data
+
+    return pd.read_json(io.StringIO(decrypted_json), orient="records")
 
 
 def update_user_connection_email(phone: str, full_name: str, company: str, email: str) -> bool:

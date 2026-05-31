@@ -86,7 +86,7 @@ export default function App() {
       setWhatsappLinked(data.whatsapp_linked || false)
       setLinkedPhone(phone)
       setView('dashboard')
-    } catch (e) { alert(`Error: ${e.message}`); setView('upload') }
+    } catch (e) { alert('An error occurred. Please try again.'); setView('upload') }
   }, [])
 
   const handleRestore = useCallback(async (phone, pin) => {
@@ -107,7 +107,7 @@ export default function App() {
       setWhatsappLinked(true)
       setLinkedPhone(phone)
       setView('dashboard')
-    } catch (e) { alert(`Error: ${e.message}`); setView('upload') }
+    } catch (e) { alert('An error occurred. Please try again.'); setView('upload') }
   }, [])
 
   const handleQuery = useCallback((query) => {
@@ -379,7 +379,7 @@ function WhatsAppBanner({ phone }) {
       <i className="fi fi-rr-comment-alt" style={{ fontSize: 24, flexShrink: 0, color: '#25D366', textShadow: '0 0 20px rgba(37,211,102,0.5)' }}></i>
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: 600, fontSize: 14, color: '#34d399', marginBottom: 4 }}>
-          WhatsApp Bot Connected: <span style={{ color: '#fff' }}>{phone}</span>
+          WhatsApp Bot Connected: <span style={{ color: '#fff' }}>{phone?.replace(/.(?=.{4})/g, '*')}</span>
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
           Your network is now searchable directly from WhatsApp.

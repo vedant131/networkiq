@@ -55,11 +55,16 @@ export default function MessageModal({ connection, sessionId, onClose }) {
             <div className="avatar" style={{ width: 40, height: 40, fontSize: 16 }}>
               {connection.full_name?.[0]?.toUpperCase() ?? '?'}
             </div>
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{connection.full_name}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                 {connection.job_title_clean} <span style={{ opacity: 0.5 }}>·</span> {connection.company}
               </div>
+              <a href={connection.linkedin_url && connection.linkedin_url !== 'nan' && connection.linkedin_url !== '' ? connection.linkedin_url : `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(connection.full_name)}`} 
+                 target="_blank" rel="noopener noreferrer" 
+                 style={{ fontSize: 11, color: 'var(--accent-blue)', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, textDecoration: 'none', fontWeight: 600 }}>
+                <i className="fi fi-rr-linkedin"></i> View on LinkedIn ↗
+              </a>
             </div>
           </div>
         </div>

@@ -1,13 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, Check, Upload, Smartphone, QrCode } from 'lucide-react'
 
 /* ─── CONSTANTS ──────────────────────────────────────────────────────────── */
 const BASE     = import.meta.env.BASE_URL
-const WA_NUM   = '+1 415 523 8886'
-const WA_CMD   = 'join sometime-certainly'
-const WA_LINK  = `https://wa.me/14155238886?text=join%20sometime-certainly`
-const QR_URL   = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(WA_LINK)}&margin=10&bgcolor=ffffff&color=000000`
 const DISPLAY  = "'Instrument Serif', serif"
 
 /* ─── UPLOAD WIDGET (dark, standalone) ───────────────────────────────────── */
@@ -20,7 +16,12 @@ function UploadWidget({ onUpload, onRestore, apiUrl }) {
   const [drag, setDrag]     = useState(false)
   const [err, setErr]       = useState('')
   const [busy, setBusy]     = useState(false)
+  const [waLink, setWaLink] = useState('https://wa.me/14155238886?text=join%20sometime-certainly')
   const ref = useRef()
+
+  useEffect(() => {
+    fetch(`${apiUrl}/api/config/whatsapp`).then(r=>r.json()).then(d=>{if(d.wa_link) setWaLink(d.wa_link)}).catch(() => {})
+  }, [apiUrl])
 
   const pick = (f) => {
     const n = f.name.toLowerCase()
@@ -112,7 +113,7 @@ function UploadWidget({ onUpload, onRestore, apiUrl }) {
       </button>
       
       <p className="text-white/30 text-xs mt-2">
-        Forgot your PIN? Text <strong>"forgot pin"</strong> to our WhatsApp bot.
+        If you forgot your PIN, please contact support.
       </p>
     </div>
   )
@@ -135,10 +136,10 @@ function UploadWidget({ onUpload, onRestore, apiUrl }) {
         <div className="rounded-xl p-4" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)' }}>
           <p className="text-amber-400 text-xs font-semibold mb-1">⚠️ Activate the bot first</p>
           <p className="text-white/50 text-[11px] leading-relaxed">
-            From WhatsApp, text <span className="font-mono text-emerald-400 font-bold">{WA_CMD}</span> to <strong className="text-white">{WA_NUM}</strong> before uploading.
+            From WhatsApp, text <span className="font-mono text-emerald-400 font-bold">{decodeURIComponent(waLink.split('=')[1] || '')}</span> to <strong className="text-white">+{waLink.split('wa.me/')[1]?.split('?')[0]}</strong> before uploading.
           </p>
-          <a href={WA_LINK} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
+          <a href={waLink} target="_blank" rel="noopener noreferrer"
+             className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
             Open WhatsApp
           </a>
         </div>

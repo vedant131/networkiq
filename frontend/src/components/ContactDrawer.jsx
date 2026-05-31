@@ -157,12 +157,12 @@ export default function ContactDrawer({
     try {
       const { apiUrl } = await import('../api.js')
       const res = await fetch(apiUrl(`/api/enrich/${sessionId}/${c.id}`), { method: 'POST' })
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Email not found') }
+      if (!res.ok) { throw new Error('no email on hunter database') }
       const data = await res.json()
       setEnrichedEmail(data.email)
       c.email = data.email 
     } catch (e) {
-      setEnrichError(e.message)
+      setEnrichError('no email on hunter database')
     } finally {
       setIsEnriching(false)
     }

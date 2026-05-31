@@ -59,7 +59,8 @@ async def security_headers(request: Request, call_next):
     return response
 
 # ── In-memory session store ────────────────────────────────────────────────────
-_sessions: dict[str, pd.DataFrame] = {}
+from cachetools import TTLCache
+_sessions = TTLCache(maxsize=1000, ttl=3600)
 _otps: dict[str, str] = {}
 
 
@@ -136,7 +137,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "ai_mode": settings.ai_mode, "version": "1.0.0"}
+    return {"status": "ok"}
+
+@app.get("/api/config/whatsapp")
+def get_whatsapp_config():
+    wa_number = settings.twilio_whatsapp_number.replace("+", "") if settings.twilio_whatsapp_number else "14155238886"
+    # Note: 'join sometime-certainly' is the Twilio Sandbox default phrase
+    return {"wa_link": f"https://wa.me/{wa_number}?text=join%20sometime-certainly"}
 
 @app.post("/api/upload")
 @limiter.limit("5/minute")
@@ -162,9 +169,21 @@ async def upload(
     if not (is_zip or is_csv):
         raise HTTPException(400, "Please upload either the Connections.csv file OR the full LinkedIn data export ZIP.")
 
-    content     = await file.read()
+    if pin and (len(pin.strip()) < 6 or not pin.strip().isdigit()):
+        raise HTTPException(400, "PIN must be at least 6 digits.")
+
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > 25 * 1024 * 1024:
+        raise HTTPException(413, "File too large.")
+
+    content = await file.read(25 * 1024 * 1024 + 1)
     if len(content) > 25 * 1024 * 1024:
-        raise HTTPException(400, "File size exceeds 25MB limit.")
+        raise HTTPException(413, "File size exceeds 25MB limit.")
+        
+    if is_zip and not content.startswith(b"PK"):
+        raise HTTPException(400, "Invalid ZIP file format.")
+    if is_csv and b"\x00" in content[:1024]:
+        raise HTTPException(400, "Invalid CSV file format. Binary content detected.")
         
     found_files = {}
 
@@ -228,11 +247,15 @@ async def restore_session(
     if not clean_phone.startswith("+"):
         clean_phone = "+" + clean_phone
         
+    import hmac
+    
     # Verify PIN
     stored_pin = db.load_user_pin(clean_phone)
-    if pin.strip() != "000000":
-        if not stored_pin or stored_pin != pin.strip():
-            raise HTTPException(401, "Invalid PIN.")
+    if not stored_pin:
+        raise HTTPException(404, "No existing data found for this phone number.")
+        
+    if not hmac.compare_digest(str(stored_pin), str(pin.strip())):
+        raise HTTPException(401, "Invalid PIN.")
         
     df = db.load_user_data(clean_phone)
     if df is None:
@@ -596,10 +619,9 @@ async def enrich_contact(session_id: str, connection_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        import traceback
-        error_msg = f"Internal Error: {str(e)}\n{traceback.format_exc()}"
-        print(error_msg)
-        raise HTTPException(500, error_msg)
+        import logging
+        logging.error(f"Enrich error: {e}", exc_info=True)
+        raise HTTPException(500, "Enrichment service unavailable.")
 
 
 # ── WhatsApp Webhook ───────────────────────────────────────────────────────────
@@ -612,9 +634,21 @@ async def whatsapp_webhook(request: Request):
     Returns TwiML XML.
     """
     try:
-        form = await request.form()
-        body      = form.get("Body", "").strip()
-        from_raw  = form.get("From", "")           # e.g. "whatsapp:+919876543210"
+        form_data = await request.form()
+        
+        # Validate Twilio signature
+        if settings.twilio_auth_token:
+            from twilio.request_validator import RequestValidator
+            validator = RequestValidator(settings.twilio_auth_token)
+            twilio_sig = request.headers.get("X-Twilio-Signature", "")
+            url = str(request.url)
+            # Render forwards headers, but might rewrite scheme. For now, basic validation.
+            # If deploying behind proxy, ensure request.url uses https
+            if not validator.validate(url, dict(form_data), twilio_sig):
+                return PlainTextResponse("Forbidden", status_code=403)
+
+        body      = form_data.get("Body", "").strip()
+        from_raw  = form_data.get("From", "")           # e.g. "whatsapp:+919876543210"
         from_phone = from_raw.replace("whatsapp:", "").strip()
 
         if not from_phone:

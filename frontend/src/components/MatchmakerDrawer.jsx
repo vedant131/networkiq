@@ -150,11 +150,11 @@ export default function MatchmakerDrawer({ sessionId, onClose, onMessage }) {
                         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                           {c.job_title_clean} {c.company && <span>at <strong style={{ color: 'var(--accent-emerald)', fontWeight: 600 }}>{c.company}</strong></span>}
                         </div>
-                        {c.linkedin_url && (
-                          <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--accent-blue)', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                            <i className="fi fi-rr-linkedin"></i> View LinkedIn
-                          </a>
-                        )}
+                        <a href={c.linkedin_url && c.linkedin_url !== 'nan' && c.linkedin_url !== '' ? c.linkedin_url : `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(c.full_name)}`} 
+                           target="_blank" rel="noopener noreferrer" 
+                           style={{ fontSize: 11, color: 'var(--accent-blue)', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, textDecoration: 'none', fontWeight: 600 }}>
+                          <i className="fi fi-rr-linkedin"></i> View on LinkedIn ↗
+                        </a>
                       </div>
                     </div>
 

@@ -11,7 +11,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://linkedin-network-intelligence.onrender.com',
+        target: process.env.VITE_API_BASE || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

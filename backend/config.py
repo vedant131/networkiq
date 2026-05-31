@@ -25,7 +25,7 @@ class Settings:
     allowed_origins: list[str] = [
         origin.strip() for origin in os.getenv(
             "ALLOWED_ORIGINS", 
-            "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,https://vedant131.github.io"
+            "https://vedant131.github.io"
         ).split(",") if origin.strip()
     ]
 
