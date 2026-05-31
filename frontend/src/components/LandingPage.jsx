@@ -270,9 +270,14 @@ function FeatureRow({ items }) {
 }
 
 /* ─── MAIN COMPONENT ─────────────────────────────────────────────────────── */
-export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl }) {
+export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl, WA_LINK, WA_NUM, WA_CMD }) {
   const [copied, setCopied] = useState(null)
   const [qrLoaded, setQrLoaded] = useState(false)
+
+  const waLink = WA_LINK || 'https://wa.me/14155238886?text=join%20sometime-certainly'
+  const waNum  = WA_NUM  || '+14155238886'
+  const waCmd  = WA_CMD  || 'join sometime-certainly'
+  const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?size=176x176&data=${encodeURIComponent(waLink)}`
 
   const copy = (text, key) => {
     navigator.clipboard.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 2000) })
@@ -413,12 +418,12 @@ export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl 
                 <div className="w-48 h-48 mx-auto mb-5 rounded-2xl flex items-center justify-center relative overflow-hidden"
                   style={{ background: '#fff', boxShadow: '0 0 0 3px rgba(52,211,153,0.35), 0 16px 60px rgba(0,0,0,0.6)' }}>
                   {!qrLoaded && <div className="absolute inset-0 bg-white/5 flex items-center justify-center text-white/30 text-xs">Loading…</div>}
-                  <img src={QR_URL} alt="WhatsApp QR" width={176} height={176}
+                  <img src={qrUrl} alt="WhatsApp QR" width={176} height={176}
                     style={{ display: 'block', borderRadius: 8, opacity: qrLoaded ? 1 : 0, transition: 'opacity 0.4s' }}
                     onLoad={() => setQrLoaded(true)} />
                 </div>
                 <p className="text-white/40 text-sm mb-5">Scan → WhatsApp opens → tap <strong className="text-emerald-400">Send</strong></p>
-                <a href={WA_LINK} target="_blank" rel="noopener noreferrer"
+                <a href={waLink} target="_blank" rel="noopener noreferrer"
                   className="liquid-glass rounded-full px-6 py-2.5 text-white text-sm hover:scale-[1.03] transition-transform inline-block flex items-center justify-center gap-2">
                   <i className="fi fi-rr-comment-alt"></i> Open WhatsApp Directly
                 </a>
@@ -429,8 +434,8 @@ export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl 
                 <p className="text-white/30 text-[10px] uppercase tracking-widest mb-4">Or text manually</p>
                 <div className="flex flex-col gap-3">
                   {[
-                    { label: 'Number', value: WA_NUM, key: 'num', mono: false },
-                    { label: 'Message (no spaces in "sometime-certainly")', value: WA_CMD, key: 'cmd', mono: true },
+                    { label: 'Number', value: waNum, key: 'num', mono: false },
+                    { label: 'Message (no spaces in "sometime-certainly")', value: waCmd, key: 'cmd', mono: true },
                   ].map(({ label, value, key, mono }) => (
                     <div key={key}>
                       <div className="text-white/30 text-[10px] mb-1.5">{label}</div>
