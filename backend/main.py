@@ -138,6 +138,26 @@ async def global_exception_handler(request: Request, exc: Exception):
 def health():
     return {"status": "ok", "ai_mode": settings.ai_mode, "version": "1.0.0"}
 
+@app.get("/api/admin/wipe-db-yes-im-sure")
+def wipe_db():
+    """Temporary endpoint to clear the entire DB."""
+    try:
+        if db._USE_PG:
+            with db._pg_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM users;")
+                    cur.execute("DELETE FROM user_state;")
+                conn.commit()
+        else:
+            with db._sq_conn() as conn:
+                conn.execute("DELETE FROM users;")
+                conn.execute("DELETE FROM user_state;")
+                conn.commit()
+        return {"status": "success", "message": "Database wiped successfully!"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 
 @app.post("/api/upload")
 @limiter.limit("5/minute")
