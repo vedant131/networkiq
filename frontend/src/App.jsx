@@ -188,7 +188,7 @@ export default function App() {
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
         <CommandNav total={connections.length} onReset={() => setView('upload')}
           onInsights={() => setShowInsights(v => !v)} showInsights={showInsights}
-          onMatchmaker={() => setShowMatchmaker(true)} />
+          onMatchmaker={() => setShowMatchmaker(true)} sessionId={sessionId} />
 
         <div style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 16px 80px', width: '100%', flex: 1 }}>
 
@@ -235,14 +235,13 @@ export default function App() {
       {showMatchmaker && (
         <MatchmakerDrawer sessionId={sessionId} onClose={() => setShowMatchmaker(false)} onMessage={openMessage} />
       )}
-      <ExportButton sessionId={sessionId} />
       </div>
     </div>
   )
 }
 
 /* ── Command Nav (Glassmorphic Top Bar) ───────────────────────── */
-function CommandNav({ total, onReset, onInsights, showInsights, onMatchmaker }) {
+function CommandNav({ total, onReset, onInsights, showInsights, onMatchmaker, sessionId }) {
   return (
     <header style={{
       position: 'sticky', top: 16, zIndex: 90,
@@ -283,6 +282,8 @@ function CommandNav({ total, onReset, onInsights, showInsights, onMatchmaker }) 
           >
             ✨ Match Me
           </button>
+
+          <ExportButton sessionId={sessionId} />
 
           <button onClick={onReset} style={{
             background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',

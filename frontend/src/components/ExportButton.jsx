@@ -29,25 +29,22 @@ export default function ExportButton({ sessionId }) {
   return (
     <button id="export-excel-btn" onClick={exportExcel} disabled={loading || !sessionId}
       style={{
-        position: 'fixed', bottom: 24, right: 24, zIndex: 40,
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 20px',
-        borderRadius: 24,   /* LinkedIn pill button */
-        border: `1.5px solid ${done ? 'var(--li-green)' : 'var(--li-blue)'}`,
-        background: done ? 'var(--li-green)' : 'var(--li-blue)',
-        color: '#fff',
-        fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '8px 16px', borderRadius: 99,
+        border: `1px solid ${done ? 'rgba(52,211,153,0.5)' : 'rgba(255,255,255,0.2)'}`,
+        background: done ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)',
+        color: done ? 'var(--accent-emerald)' : '#fff',
+        fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
         cursor: loading || !sessionId ? 'not-allowed' : 'pointer',
         opacity: !sessionId ? 0.5 : 1,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-        transition: 'all 0.18s',
+        transition: 'all 0.2s',
       }}
-      onMouseEnter={e => { if (!loading && sessionId) e.currentTarget.style.background = done ? 'var(--li-green)' : 'var(--li-blue-hover)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = done ? 'var(--li-green)' : 'var(--li-blue)' }}
+      onMouseEnter={e => { if (!loading && sessionId && !done) { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' } }}
+      onMouseLeave={e => { if (!done) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)' } }}
     >
-      {loading ? <><span className="spinner" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> Exporting…</>
-       : done    ? <>✓ my_network.xlsx saved</>
-       :           <>↓ Export .xlsx</>}
+      {loading ? <><span className="spinner" style={{ width: 14, height: 14, borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> Exporting…</>
+       : done    ? <><i className="fi fi-rr-check"></i> Saved</>
+       :           <><i className="fi fi-rr-download"></i> Export .xlsx</>}
     </button>
   )
 }
