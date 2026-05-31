@@ -12,7 +12,7 @@ from collections import Counter
 from db import (
     user_exists, load_user_data, get_user_info,
     delete_user_data, get_user_state, set_user_state,
-    update_user_connection_email,
+    update_user_connection_email, load_user_pin,
 )
 from pipeline.query_engine import process_query
 from whatsapp_formatter import (
@@ -105,6 +105,11 @@ def handle_message(from_phone: str, body: str, website_url: str = WEBSITE_URL) -
     # ── Check registration ─────────────────────────────────────────────────────
     if not user_exists(from_phone):
         return _twiml(format_not_registered(website_url))
+
+    # ── Forgot PIN command ─────────────────────────────────────────────────────
+    if text_lower in ("forgot pin", "pin", "my pin", "what is my pin", "reset pin"):
+        pin = load_user_pin(from_phone)
+        return _twiml(f"🔒 Your NetWorkIQ security PIN is: *{pin}*\n\nUse this PIN on {website_url} to restore your dashboard.")
 
     # ── Stats command ──────────────────────────────────────────────────────────
     if text_lower in ("stats", "statistics", "summary", "overview"):

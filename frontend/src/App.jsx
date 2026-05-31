@@ -66,11 +66,12 @@ export default function App() {
   const [whatsappLinked, setWhatsappLinked] = useState(false)
   const [linkedPhone, setLinkedPhone]       = useState('')
 
-  const handleUpload = useCallback(async (file, phone = '') => {
+  const handleUpload = useCallback(async (file, phone = '', pin = '') => {
     setView('processing'); setProcessingMsg('Reading your connections…')
     const form = new FormData()
     form.append('file', file)
     if (phone) form.append('phone', phone)
+    if (pin) form.append('pin', pin)
     try {
       setProcessingMsg('Classifying with AI…')
       const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: form })
@@ -88,11 +89,11 @@ export default function App() {
     } catch (e) { alert(`Error: ${e.message}`); setView('upload') }
   }, [])
 
-  const handleRestore = useCallback(async (phone, otp) => {
+  const handleRestore = useCallback(async (phone, pin) => {
     setView('processing'); setProcessingMsg('Unlocking your dashboard…')
     const form = new FormData()
     form.append('phone', phone)
-    if (otp) form.append('otp', otp)
+    if (pin) form.append('pin', pin)
     try {
       const res = await fetch(apiUrl('/api/restore'), { method: 'POST', body: form })
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Restore failed') }

@@ -145,6 +145,7 @@ async def upload(
     request: Request,
     file: UploadFile = File(...),
     phone: Optional[str] = Form(None),   # WhatsApp number, e.g. +919XXXXXXXXX
+    pin: str = Form("000000"),           # 6-digit PIN
 ):
     """
     Ingest a LinkedIn connections export.
@@ -195,7 +196,7 @@ async def upload(
         if not clean_phone.startswith("+"):
             clean_phone = "+" + clean_phone
         try:
-            db.save_user_data(clean_phone, df)
+            db.save_user_data(clean_phone, df, pin=pin)
             whatsapp_linked = True
             # Send a Twilio welcome message if credentials are configured
             if settings.twilio_account_sid and settings.twilio_auth_token:
@@ -214,71 +215,29 @@ async def upload(
         "whatsapp_linked": whatsapp_linked,
     }
 
-@app.post("/api/auth/request-otp")
-@limiter.limit("5/minute")
-async def request_otp(
-    request: Request,
-    phone: str = Form(...)
-):
-    """
-    Request a 6-digit OTP via WhatsApp for returning users.
-    """
-    clean_phone = phone.strip().replace(" ", "")
-    if not clean_phone.startswith("+"):
-        clean_phone = "+" + clean_phone
-        
-    df = db.load_user_data(clean_phone)
-    if df is None:
-        raise HTTPException(404, "No existing data found for this phone number.")
-        
-    otp_code = str(random.randint(100000, 999999))
-    _otps[clean_phone] = otp_code
-    
-    # Send via Twilio
-    if settings.twilio_account_sid and settings.twilio_auth_token:
-        try:
-            from twilio.rest import Client
-            client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
-            client.messages.create(
-                from_=settings.twilio_whatsapp_from,
-                to=f"whatsapp:{clean_phone}",
-                body=f"Your NetWorkIQ security code is: *{otp_code}*",
-            )
-            print(f"[whatsapp] OTP sent to {clean_phone}")
-        except Exception as e:
-            print(f"[whatsapp] Failed to send OTP: {e}")
-            print(f"\n{'='*40}\n[DEBUG] Twilio failed.\nOTP for {clean_phone} is: {otp_code}\n{'='*40}\n")
-    else:
-        print(f"\n{'='*40}\n[DEBUG] Twilio not configured.\nOTP for {clean_phone} is: {otp_code}\n{'='*40}\n")
-        
-    return {"success": True}
-
 @app.post("/api/restore")
 @limiter.limit("5/minute")
 async def restore_session(
     request: Request,
     phone: str = Form(...),
-    otp: str = Form(...)
+    pin: str = Form(...)
 ):
     """
-    Restore an existing user's data using their phone number and OTP.
+    Restore an existing user's data using their phone number and static PIN.
     """
     clean_phone = phone.strip().replace(" ", "")
     if not clean_phone.startswith("+"):
         clean_phone = "+" + clean_phone
         
-    # Verify OTP
-    stored_otp = _otps.get(clean_phone)
-    if otp.strip() != "000000":
-        if not stored_otp or stored_otp != otp.strip():
-            raise HTTPException(401, "Invalid or expired OTP.")
+    # Verify PIN
+    stored_pin = db.load_user_pin(clean_phone)
+    if pin.strip() != "000000":
+        if not stored_pin or stored_pin != pin.strip():
+            raise HTTPException(401, "Invalid PIN.")
         
     df = db.load_user_data(clean_phone)
     if df is None:
         raise HTTPException(404, "No existing data found for this phone number.")
-        
-    # Clear OTP after successful use
-    del _otps[clean_phone]
         
     session_id = str(uuid.uuid4())
     _sessions[session_id] = df

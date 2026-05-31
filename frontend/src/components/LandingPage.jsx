@@ -16,11 +16,10 @@ function UploadWidget({ onUpload, onRestore, apiUrl }) {
   const [step, setStep]     = useState(1)
   const [file, setFile]     = useState(null)
   const [phone, setPhone]   = useState('')
-  const [otp, setOtp]       = useState('')
+  const [pin, setPin]       = useState('')
   const [drag, setDrag]     = useState(false)
   const [err, setErr]       = useState('')
   const [busy, setBusy]     = useState(false)
-  const [otpStep, setOtpStep] = useState(false)
   const ref = useRef()
 
   const pick = (f) => {
@@ -35,29 +34,9 @@ function UploadWidget({ onUpload, onRestore, apiUrl }) {
   const submit = async () => {
     const d = phone.replace(/\D/g, '')
     if (d.length < 10) { setErr('Enter a valid number with country code (min 10 digits)'); return }
+    if (pin.length !== 6) { setErr('Please set a 6-digit PIN'); return }
     setErr(''); setBusy(true)
-    try { await onUpload(file, phone.trim()) } finally { setBusy(false) }
-  }
-
-  const handleRequestOtp = async () => {
-    const d = phone.replace(/\D/g, '')
-    if (d.length < 10) { setErr('Enter a valid number with country code'); return }
-    setBusy(true)
-    try {
-      const form = new FormData()
-      form.append('phone', phone.trim())
-      const res = await fetch(apiUrl('/api/auth/request-otp'), { method: 'POST', body: form })
-      if (!res.ok) {
-        const e = await res.json()
-        throw new Error(e.detail || 'Failed to send OTP')
-      }
-      setOtpStep(true)
-      setErr('')
-    } catch (e) {
-      setErr(e.message)
-    } finally {
-      setBusy(false)
-    }
+    try { await onUpload(file, phone.trim(), pin) } finally { setBusy(false) }
   }
 
   const renderStep1 = () => (
@@ -104,49 +83,37 @@ function UploadWidget({ onUpload, onRestore, apiUrl }) {
       <div className="text-4xl mb-2">📱</div>
       <h3 className="text-white font-semibold text-lg">Welcome Back!</h3>
       <p className="text-white/50 text-sm leading-relaxed max-w-sm mx-auto">
-        {otpStep 
-          ? "Enter the 6-digit security code we just sent to your WhatsApp." 
-          : "Enter the WhatsApp number you used previously to instantly restore your dashboard."}
+        Enter your WhatsApp number and PIN to instantly restore your dashboard.
       </p>
       
-      {!otpStep ? (
-        <>
-          <div className="mt-2 text-left">
-            <label className="text-white/50 text-xs font-medium block mb-2">WhatsApp Number</label>
-            <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
-              placeholder="+91 98765 43210"
-              className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
-              style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
-              onKeyDown={e => { if (e.key === 'Enter') handleRequestOtp() }}
-            />
-            {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
-          </div>
-          <button onClick={handleRequestOtp} disabled={busy}
-            className="liquid-glass rounded-xl py-3.5 text-white text-sm font-semibold hover:scale-[1.02] transition-transform disabled:opacity-60 w-full mt-2">
-            {busy ? '⏳ Sending Code…' : 'Send OTP via WhatsApp'}
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="mt-2 text-left">
-            <label className="text-white/50 text-xs font-medium block mb-2">6-Digit OTP</label>
-            <input type="text" value={otp} onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setErr('') }}
-              placeholder="123456"
-              className="w-full rounded-xl px-4 py-3 text-center text-xl tracking-[0.5em] text-white placeholder-white/20 outline-none transition-all font-mono"
-              style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
-              onKeyDown={e => { if (e.key === 'Enter' && otp.length === 6) onRestore(phone.trim(), otp) }}
-            />
-            {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
-          </div>
-          <button onClick={() => { if (otp.length !== 6) setErr('Enter a 6-digit code'); else onRestore(phone.trim(), otp) }} disabled={busy || otp.length < 6}
-            className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 rounded-xl py-3.5 text-sm font-semibold hover:scale-[1.02] transition-all disabled:opacity-60 w-full mt-2">
-            {busy ? 'Unlocking…' : 'Unlock Dashboard'}
-          </button>
-          <button onClick={() => { setOtpStep(false); setOtp(''); setErr(''); }} className="text-white/40 text-xs hover:text-white mt-2 transition-colors">
-            ← Change Number
-          </button>
-        </>
-      )}
+      <div className="mt-2 text-left">
+        <label className="text-white/50 text-xs font-medium block mb-2">WhatsApp Number</label>
+        <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
+          placeholder="+91 98765 43210"
+          className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
+          style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
+        />
+      </div>
+
+      <div className="text-left">
+        <label className="text-white/50 text-xs font-medium block mb-2">6-Digit PIN</label>
+        <input type="password" value={pin} onChange={e => { setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setErr('') }}
+          placeholder="••••••"
+          className="w-full rounded-xl px-4 py-3 text-center text-xl tracking-[0.5em] text-white placeholder-white/20 outline-none transition-all font-mono"
+          style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
+          onKeyDown={e => { if (e.key === 'Enter' && pin.length === 6) onRestore(phone.trim(), pin) }}
+        />
+        {err && <p className="text-red-400 text-[11px] mt-1.5">⚠️ {err}</p>}
+      </div>
+      
+      <button onClick={() => { if (pin.length !== 6) setErr('Enter a 6-digit code'); else onRestore(phone.trim(), pin) }} disabled={busy || pin.length < 6}
+        className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 rounded-xl py-3.5 text-sm font-semibold hover:scale-[1.02] transition-all disabled:opacity-60 w-full mt-2">
+        {busy ? 'Unlocking…' : 'Unlock Dashboard'}
+      </button>
+      
+      <p className="text-white/30 text-xs mt-2">
+        Forgot your PIN? Text <strong>"forgot pin"</strong> to our WhatsApp bot.
+      </p>
     </div>
   )
 
@@ -182,6 +149,16 @@ function UploadWidget({ onUpload, onRestore, apiUrl }) {
           <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setErr('') }}
             placeholder="+91 98765 43210"
             className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all"
+            style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
+          />
+        </div>
+
+        {/* PIN */}
+        <div>
+          <label className="text-white/50 text-xs font-medium block mb-2">Set 6-Digit PIN (for returning later)</label>
+          <input type="text" value={pin} onChange={e => { setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setErr('') }}
+            placeholder="123456"
+            className="w-full rounded-xl px-4 py-3 text-center text-xl tracking-[0.5em] text-white placeholder-white/20 outline-none transition-all font-mono"
             style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${err ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.12)'}` }}
             onKeyDown={e => e.key === 'Enter' && submit()}
           />

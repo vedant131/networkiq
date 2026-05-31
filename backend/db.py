@@ -74,7 +74,8 @@ def init_db():
                         phone        TEXT PRIMARY KEY,
                         total        INTEGER DEFAULT 0,
                         uploaded_at  TEXT,
-                        data_json    TEXT
+                        data_json    TEXT,
+                        pin          TEXT DEFAULT '000000'
                     );
                     CREATE TABLE IF NOT EXISTS user_state (
                         phone       TEXT PRIMARY KEY,
@@ -85,6 +86,10 @@ def init_db():
                         updated_at  TEXT
                     );
                 """)
+                try:
+                    cur.execute("ALTER TABLE users ADD COLUMN pin TEXT DEFAULT '000000'")
+                except psycopg2.Error:
+                    pass
             conn.commit()
     else:
         with _sq_conn() as conn:
@@ -93,7 +98,8 @@ def init_db():
                     phone        TEXT PRIMARY KEY,
                     total        INTEGER DEFAULT 0,
                     uploaded_at  TEXT,
-                    data_json    TEXT
+                    data_json    TEXT,
+                    pin          TEXT DEFAULT '000000'
                 );
                 CREATE TABLE IF NOT EXISTS user_state (
                     phone       TEXT PRIMARY KEY,
@@ -104,6 +110,10 @@ def init_db():
                     updated_at  TEXT
                 );
             """)
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN pin TEXT DEFAULT '000000'")
+            except sqlite3.OperationalError:
+                pass
             conn.commit()
 
 
@@ -121,7 +131,7 @@ def user_exists(phone: str) -> bool:
         return row is not None
 
 
-def save_user_data(phone: str, df: pd.DataFrame):
+def save_user_data(phone: str, df: pd.DataFrame, pin: str = "000000"):
     """Persist a processed DataFrame for a phone number."""
     data_json = df.to_json(orient="records", date_format="iso")
     now = datetime.utcnow().isoformat()
@@ -129,25 +139,40 @@ def save_user_data(phone: str, df: pd.DataFrame):
         with _pg_conn() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO users (phone, total, uploaded_at, data_json)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO users (phone, total, uploaded_at, data_json, pin)
+                    VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT(phone) DO UPDATE SET
                         total       = EXCLUDED.total,
                         uploaded_at = EXCLUDED.uploaded_at,
-                        data_json   = EXCLUDED.data_json
-                """, (phone, len(df), now, data_json))
+                        data_json   = EXCLUDED.data_json,
+                        pin         = EXCLUDED.pin
+                """, (phone, len(df), now, data_json, pin))
             conn.commit()
     else:
         with _sq_conn() as conn:
             conn.execute("""
-                INSERT INTO users (phone, total, uploaded_at, data_json)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO users (phone, total, uploaded_at, data_json, pin)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(phone) DO UPDATE SET
                     total       = excluded.total,
                     uploaded_at = excluded.uploaded_at,
-                    data_json   = excluded.data_json
-            """, (phone, len(df), now, data_json))
+                    data_json   = excluded.data_json,
+                    pin         = excluded.pin
+            """, (phone, len(df), now, data_json, pin))
             conn.commit()
+
+def load_user_pin(phone: str) -> Optional[str]:
+    """Load a user's pin from the database."""
+    if _USE_PG:
+        with _pg_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT pin FROM users WHERE phone = %s", (phone,))
+                row = cur.fetchone()
+                return row[0] if row else None
+    else:
+        with _sq_conn() as conn:
+            row = conn.execute("SELECT pin FROM users WHERE phone = ?", (phone,)).fetchone()
+            return row["pin"] if row else None
 
 
 def load_user_data(phone: str) -> Optional[pd.DataFrame]:
