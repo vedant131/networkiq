@@ -137,33 +137,48 @@ def ingest_zip(zip_bytes: bytes) -> tuple[pd.DataFrame, dict]:
     phone_data       = None
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-        names = zf.namelist()
-        for name in names:
-            lower = name.lower().replace(" ", "_")
-            data  = zf.read(name)
+        infos = zf.infolist()
+        total_csv_size = 0
 
-            if "connection" in lower and name.endswith(".csv"):
-                connections_data = data
+        for info in infos:
+            name = info.filename
+            if not name.lower().endswith(".csv"):
+                continue  # Skip all non-CSV files completely (like videos)
+
+            # Protection against zip bombs
+            total_csv_size += info.file_size
+            if info.file_size > 50 * 1024 * 1024:
+                raise ValueError("Security block: A single CSV file exceeds 50MB. Please remove unnecessarily large files.")
+            if total_csv_size > 100 * 1024 * 1024:
+                raise ValueError("Security block: Uncompressed CSV data exceeds 100MB limit.")
+
+            lower = name.lower().replace(" ", "_")
+
+            if "connection" in lower:
+                connections_data = zf.read(name)
                 found["connections"] = name
-            elif "email" in lower and "address" in lower and name.endswith(".csv"):
-                email_data = data
+            elif "email" in lower and "address" in lower:
+                email_data = zf.read(name)
                 found["emails"] = name
-            elif "phone" in lower and name.endswith(".csv"):
-                phone_data = data
+            elif "phone" in lower:
+                phone_data = zf.read(name)
                 found["phones"] = name
 
-        # Fallback: find any CSV with "connect" loosely — must stay INSIDE with block
+        # Fallback: find any CSV with "connect" loosely
         if connections_data is None:
-            for name in names:
-                if name.endswith(".csv") and "connect" in name.lower():
+            for info in infos:
+                name = info.filename
+                if name.lower().endswith(".csv") and "connect" in name.lower():
+                    if info.file_size > 50 * 1024 * 1024:
+                        raise ValueError("Security block: Connections CSV exceeds 50MB.")
                     connections_data = zf.read(name)
                     found["connections"] = name
                     break
 
     if connections_data is None:
         raise ValueError(
-            "Could not find Connections.csv inside the ZIP. "
-            "Make sure you downloaded 'Connections' in your LinkedIn data export."
+            "Invalid file format! We could not find Connections.csv inside the upload. "
+            "Please upload the direct downloaded ZIP file from LinkedIn."
         )
 
     df = _read_connections(connections_data)
