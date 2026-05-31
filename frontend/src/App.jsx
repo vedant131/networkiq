@@ -219,12 +219,7 @@ export default function App() {
         {insights && <IntelligenceOverview insights={insights} connections={connections} />}
 
         {/* ── Smart Recommendations ── */}
-        {recommendations.length > 0 && (
-          <SmartRecommendations
-            recs={recommendations}
-            onContact={setContactTarget} onMessage={(c) => { setMessageTarget(c) }}
-          />
-        )}
+        {/* Removed per user request */}
       </div>
 
       {contactTarget && (

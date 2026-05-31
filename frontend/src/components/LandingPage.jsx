@@ -292,7 +292,7 @@ function FeatureRow({ items }) {
 }
 
 /* ─── MAIN COMPONENT ─────────────────────────────────────────────────────── */
-export default function LandingPage({ onUpload, onRestore, onShowUpload }) {
+export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl }) {
   const [copied, setCopied] = useState(null)
   const [qrLoaded, setQrLoaded] = useState(false)
 
@@ -422,7 +422,7 @@ export default function LandingPage({ onUpload, onRestore, onShowUpload }) {
                 <div className="text-white/45 text-sm mt-1">Upload your LinkedIn data, then link your WhatsApp</div>
               </div>
               <div className="p-6" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                <UploadWidget onUpload={onUpload} onRestore={onRestore} />
+                <UploadWidget onUpload={onUpload} onRestore={onRestore} apiUrl={apiUrl} />
               </div>
             </div>
 
