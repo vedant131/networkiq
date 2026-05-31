@@ -59,18 +59,18 @@ body {
 
 /* ═══ PRIMARY SOLID BUTTON (replaced glass theme) ═════════════════════════════ */
 .liquid-glass {
-  background: var(--accent-emerald);
-  color: var(--bg-dark) !important;
+  background: #ffffff;
+  color: #000000 !important;
   border: none;
   font-weight: 600;
   transition: all 0.2s ease;
 }
 .liquid-glass:hover {
-  background: #10b981;
+  background: #e5e5e5;
   transform: translateY(-1px);
 }
 .liquid-glass svg {
-  color: var(--bg-dark) !important;
+  color: #000000 !important;
 }
 
 /* ═══ BACKGROUND NOISE ════════════════════════════════════════════ */
