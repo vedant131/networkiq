@@ -375,7 +375,7 @@ function WhatsAppBanner({ phone }) {
       padding: '16px 20px', borderRadius: 12,
       background: 'rgba(37,211,102,0.05)', border: '1px solid rgba(37,211,102,0.2)',
     }}>
-      <span style={{ fontSize: 24, flexShrink: 0, textShadow: '0 0 20px rgba(37,211,102,0.5)' }}>💬</span>
+      <i className="fi fi-rr-comment-alt" style={{ fontSize: 24, flexShrink: 0, color: '#25D366', textShadow: '0 0 20px rgba(37,211,102,0.5)' }}></i>
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: 600, fontSize: 14, color: '#34d399', marginBottom: 4 }}>
           WhatsApp Bot Connected: <span style={{ color: '#fff' }}>{phone}</span>
@@ -407,9 +407,9 @@ function SmartRecommendations({ recs, onContact, onMessage }) {
         padding: '16px 20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-light)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 16 }}>⚡</span>
+          <i className="fi fi-rr-bolt" style={{ fontSize: 16, color: 'var(--accent-emerald)' }}></i>
           <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-main)', letterSpacing: '0.02em' }}>
-            Smart Outreach <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>— {recs.length} recommended actions</span>
+            Smart Outreach <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> {recs.length} recommended actions</span>
           </span>
         </div>
       </div>
@@ -451,7 +451,9 @@ function SmartRecommendations({ recs, onContact, onMessage }) {
 function ProcessingView({ status }) {
   return (
     <div style={{ textAlign: 'center', maxWidth: 400, margin: '0 auto' }} className="anim-in">
-      <div className="liquid-glass" style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(255,255,255,0.1)' }}>🧠</div>
+      <div style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+        <i className="fi fi-rr-magic-wand" style={{ color: 'var(--accent-emerald)' }}></i>
+      </div>
       <h2 className="font-display" style={{ fontSize: 36, marginBottom: 12, color: '#fff', letterSpacing: '-0.02em' }}>Analysing Network</h2>
       <p style={{ color: 'var(--text-muted)', fontSize: 15, marginBottom: 32 }}>{status}</p>
       <div style={{ display: 'flex', justifyContent: 'center' }}>

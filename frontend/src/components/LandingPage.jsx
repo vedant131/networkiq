@@ -259,7 +259,7 @@ function FeatureRow({ items }) {
           onMouseEnter={e => { e.currentTarget.style.borderColor = color + '44'; e.currentTarget.style.background = color + '10' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
         >
-          <span className="text-2xl">{icon}</span>
+          <span className="text-2xl">{icon.startsWith('fi') ? <i className={icon}></i> : icon}</span>
           <div className="text-white text-sm font-semibold">{title}</div>
           <div className="text-white/35 text-xs leading-relaxed">{desc}</div>
         </motion.div>
@@ -418,8 +418,8 @@ export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl 
                 </div>
                 <p className="text-white/40 text-sm mb-5">Scan → WhatsApp opens → tap <strong className="text-emerald-400">Send</strong></p>
                 <a href={WA_LINK} target="_blank" rel="noopener noreferrer"
-                  className="liquid-glass rounded-full px-6 py-2.5 text-white text-sm hover:scale-[1.03] transition-transform inline-block">
-                  💬 Open WhatsApp Directly →
+                  className="liquid-glass rounded-full px-6 py-2.5 text-white text-sm hover:scale-[1.03] transition-transform inline-block flex items-center justify-center gap-2">
+                  <i className="fi fi-rr-comment-alt"></i> Open WhatsApp Directly
                 </a>
               </div>
 
@@ -463,23 +463,23 @@ export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl 
               <em className="not-italic text-white/40">redefined.</em>
             </h2>
             <p className="text-white/40 text-base mt-5 max-w-xl mx-auto leading-relaxed">
-              Ask anything from WhatsApp. No app install. No dashboard. Just results — instantly.
+              Ask anything from WhatsApp. No app install. No dashboard. Just results, instantly.
             </p>
           </div>
 
           <FeatureRow items={[
-            { icon: '🔍', title: 'Smart Search',       color: '#4fa3ff', desc: '"find recruiters at Google", "show senior engineers in India"' },
-            { icon: '📧', title: 'Email Finder',        color: '#34d399', desc: 'Hunter → Apollo → Snov → PDL waterfall enrichment' },
-            { icon: '🌐', title: 'Vibe Prospecting',    color: '#c084fc', desc: '500M+ cold B2B leads beyond your own network' },
-            { icon: '👤', title: 'Full Profile Card',   color: '#fbbf24', desc: 'LinkedIn, GitHub, Twitter, career history & education' },
+            { icon: 'fi fi-rr-search', title: 'Smart Search',       color: '#4fa3ff', desc: '"find recruiters at Google", "show senior engineers in India"' },
+            { icon: 'fi fi-rr-envelope', title: 'Email Finder',        color: '#34d399', desc: 'Hunter, Apollo, Snov, PDL waterfall enrichment' },
+            { icon: 'fi fi-rr-globe', title: 'Vibe Prospecting',    color: '#c084fc', desc: '500M+ cold B2B leads beyond your own network' },
+            { icon: 'fi fi-rr-user', title: 'Full Profile Card',   color: '#fbbf24', desc: 'LinkedIn, GitHub, Twitter, career history & education' },
           ]} />
 
           <div className="mt-3">
             <FeatureRow items={[
-              { icon: '📊', title: 'Network Stats',       color: '#38bdf8', desc: 'Text "stats" for instant breakdown by role & company' },
-              { icon: '⚡', title: 'Instant on WhatsApp', color: '#34d399', desc: 'No app install. 24/7. Any device.' },
-              { icon: '🔒', title: 'Private & Secure',    color: '#f87171', desc: 'Your data stays yours — never sold, never shared' },
-              { icon: '🤖', title: 'AI Classification',   color: '#c084fc', desc: 'Automatic tagging by seniority, role, industry' },
+              { icon: 'fi fi-rr-stats', title: 'Network Stats',       color: '#38bdf8', desc: 'Text "stats" for instant breakdown by role & company' },
+              { icon: 'fi fi-rr-bolt', title: 'Instant on WhatsApp', color: '#34d399', desc: 'No app install. 24/7. Any device.' },
+              { icon: 'fi fi-rr-lock', title: 'Private & Secure',    color: '#f87171', desc: 'Your data stays yours, never sold, never shared' },
+              { icon: 'fi fi-rr-robot', title: 'AI Classification',   color: '#c084fc', desc: 'Automatic tagging by seniority, role, industry' },
             ]} />
           </div>
 
@@ -488,16 +488,16 @@ export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl 
             <p className="text-white/30 text-[10px] uppercase tracking-widest mb-5 text-center">Example WhatsApp commands</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
               {[
-                '🔍 "find recruiters at Google"',
-                '📧 "Enrich Priya Sharma"',
-                '🏢 "top companies in my network"',
-                '📊 "stats"',
-                '🌐 "who works at Stripe"',
-                '👤 "show senior engineers in Bangalore"',
+                { icon: 'fi fi-rr-search', text: '"find recruiters at Google"' },
+                { icon: 'fi fi-rr-envelope', text: '"Enrich Priya Sharma"' },
+                { icon: 'fi fi-rr-building', text: '"top companies in my network"' },
+                { icon: 'fi fi-rr-stats', text: '"stats"' },
+                { icon: 'fi fi-rr-globe', text: '"who works at Stripe"' },
+                { icon: 'fi fi-rr-user', text: '"show senior engineers in Bangalore"' },
               ].map(c => (
-                <div key={c} className="text-white/50 text-xs font-mono px-4 py-3 rounded-xl"
+                <div key={c.text} className="text-white/50 text-xs font-mono px-4 py-3 rounded-xl flex items-center gap-3"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {c}
+                  <i className={c.icon} style={{ color: 'var(--accent-emerald)' }}></i> {c.text}
                 </div>
               ))}
             </div>
@@ -515,10 +515,10 @@ export default function LandingPage({ onUpload, onRestore, onShowUpload, apiUrl 
             <div>
               <p className="text-amber-400 text-sm font-semibold mb-2">Data Disclaimer</p>
               <ul className="text-white/40 text-xs leading-[2.1] list-disc ml-3">
-                <li><strong className="text-white/65">Third-party data</strong> — PDL, Hunter.io, Apollo &amp; Explorium. Not always 100% accurate.</li>
-                <li><strong className="text-white/65">Some people won't be found</strong> — not everyone is indexed in these databases.</li>
-                <li><strong className="text-white/65">Verify before outreach</strong> — always confirm emails are correct before messaging.</li>
-                <li><strong className="text-white/65">Your LinkedIn data is private</strong> — securely stored, never sold or shared.</li>
+                <li><strong className="text-white/65">Third party data</strong> PDL, Hunter.io, Apollo &amp; Explorium. Not always 100% accurate.</li>
+                <li><strong className="text-white/65">Some people won't be found</strong> not everyone is indexed in these databases.</li>
+                <li><strong className="text-white/65">Verify before outreach</strong> always confirm emails are correct before messaging.</li>
+                <li><strong className="text-white/65">Your LinkedIn data is private</strong> securely stored, never sold or shared.</li>
               </ul>
             </div>
           </div>

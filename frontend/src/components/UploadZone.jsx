@@ -151,12 +151,12 @@ export default function UploadZone({ onUpload, onRestore }) {
           onKeyDown={e => e.key === 'Enter' && handleSubmit()}
         />
         {phoneError && (
-          <div style={{ fontSize: 12, color: 'var(--li-red)', marginTop: 4 }}>⚠️ {phoneError}</div>
+          <div style={{ fontSize: 12, color: 'var(--li-red)', marginTop: 4 }}><i className="fi fi-rr-exclamation"></i> {phoneError}</div>
         )}
       </div>
 
       <div style={{ background: 'var(--li-blue-tint)', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: 'var(--li-text-2)' }}>
-        <div style={{ fontWeight: 600, color: 'var(--li-blue)', marginBottom: 6 }}>💡 After connecting:</div>
+        <div style={{ fontWeight: 600, color: 'var(--li-blue)', marginBottom: 6 }}><i className="fi fi-rr-bulb"></i> After connecting:</div>
         <ul style={{ margin: 0, padding: '0 0 0 16px', lineHeight: 2 }}>
           <li>"who works at Google?" → list of Google connections</li>
           <li>"find engineers at Stripe" → filtered results</li>
@@ -173,7 +173,7 @@ export default function UploadZone({ onUpload, onRestore }) {
           disabled={uploading}
           style={{ flex: 1, padding: '11px', fontSize: 14, opacity: uploading ? 0.7 : 1 }}
         >
-          {uploading ? '⏳ Uploading...' : '🚀 Upload & Connect WhatsApp'}
+          {uploading ? 'Uploading...' : <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8}}><i className="fi fi-rr-rocket"></i> Upload & Connect WhatsApp</span>}
         </button>
         <button
           className="btn btn-ghost"
@@ -189,7 +189,7 @@ export default function UploadZone({ onUpload, onRestore }) {
   const renderRestoreTab = () => (
     <div className="anim-stagger-1" style={{ padding: '24px 0' }}>
       <div style={{ marginBottom: 24, textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
+        <i className="fi fi-rr-smartphone" style={{ fontSize: 40, marginBottom: 12, color: 'var(--accent-emerald)', display: 'block' }}></i>
         <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--li-text)', marginBottom: 8 }}>Welcome Back!</h3>
         <p style={{ fontSize: 14, color: 'var(--li-text-2)', maxWidth: 400, margin: '0 auto' }}>
           Enter the phone number you used previously to instantly restore your dashboard and WhatsApp bot connection.
@@ -216,7 +216,7 @@ export default function UploadZone({ onUpload, onRestore }) {
           }}
         />
         {phoneError && (
-          <div style={{ fontSize: 12, color: 'var(--li-red)', marginBottom: 20 }}>⚠️ {phoneError}</div>
+          <div style={{ fontSize: 12, color: 'var(--li-red)', marginBottom: 20 }}><i className="fi fi-rr-exclamation"></i> {phoneError}</div>
         )}
 
         <button
@@ -232,7 +232,7 @@ export default function UploadZone({ onUpload, onRestore }) {
           disabled={uploading}
           style={{ width: '100%', padding: '12px', fontSize: 15 }}
         >
-          {uploading ? '⏳ Restoring...' : '🔄 Restore My Network'}
+          {uploading ? 'Restoring...' : <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8}}><i className="fi fi-rr-refresh"></i> Restore My Network</span>}
         </button>
       </div>
     </div>
