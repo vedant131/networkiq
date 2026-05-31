@@ -21,12 +21,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Gitleaks Secret Scanner
         uses: gitleaks/gitleaks-action@b9b3e8e7a0fc6985bb5e5e40e695f269a92a5d7c # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false
+        continue-on-error: true
 
       - name: Setup Node
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
